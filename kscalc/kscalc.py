@@ -1,8 +1,6 @@
-import random
-random.seed(21)
-import numpy as np
-from functools import partial
-import bisect
+import score_guess
+print score_guess
+from score_guess import score_guess
 import scipy.optimize as so
 
 
@@ -22,36 +20,6 @@ TTCGGTGGTTAA"""
 a = """ATGGCGGCGGCGGCGGCGGCGGCGGGGTACAGGGCGGAGGAGGAGTACGACTACCTGTTCAAGGTGGTGCTGATCGGGGACAGCGGCGTGGGGAAGTCGAACCTGCTGTCGCGGTTCGCGCGGGACGAGTTCAGCCTGGAGACCAGGTCCACCATCGGCGTCGAGTTCGCCACCAAGACCGTCCGCGTCGACGACAGGCTCGTCAAGGCCCAGATCTGGGACACCGCCGGCCAAGAGAGGTACCGCGCCATCACGAGCGCCTACTACCGCGGCGCGGTGGGCGCGCTGGTGGTGTACGACGTGACGCGCCGCATCACGTTCGAGAACGCGGAGCGGTGGCTCAAGGAGCTCCGCGACCACACGGACGCCAACATCGTCGTCATGCTCGTGGGCAACAAGGCCGACCTGCGCCACCTCCGCGCCGTCCCCGCGGAGGACGCCAGGGCGTTCGCCGAGGCGCACGGGACCTTCTCCATGGAGACGTCGGCGCTGGAGGCCACCAACGTGGAGGGCGCCTTCACCGAGGTGCTCGCGCAGATCTACCGCGTCGTCAGCCGGAACGCGCTCGACATCGGCGACGACCCCGCCGCGCCGCCCCGGGGGCGGACCATCGACGTCAGCGCCAAGGATGACGCCGTCACCCCCGTGAACAGCTCAGGGTGCTGCTCGTCTTGA"""
 b = """---------------ATGGCGTCGGGGTACCGCGCGGAGGAGGAGTACGACTACCTGTTCAAGGTGGTGCTGATCGGGGACAGCGGCGTGGGCAAGTCGAACCTGCTGTCGCGGTTCGCCAGGGACGAGTTCAGCCTCGAGACCAGGTCCACCATCGGCGTCGAGTTCGCCACCAAGACCGTCCAGGTCGACGACAAGCTCGTCAAGGCGCAGATCTGGGACACCGCCGGGCAGGAGAGGTACCGCGCCATCACGAGCGCATACTACCGCGGCGCGGTGGGCGCGCTGGTGGTGTACGACGTGACCCGCCGCATCACCTTCGACAACGCCGAGCGCTGGCTGCGGGAGCTGCGGGACCACACGGACGCCAACATCGTGGTCATGCTGGTGGGCAACAAGGCCGACCTGCGCCACCTCCGCGCCGTGACGCCCGAGGACGCCGCGGCCTTCGCGGAGCGGCACGGCACCTTCTCCATGGAGACGTCGGCGCTGGACGCCACCAACGTCGACCGCGCCTTCGCCGAGGTGCTCCGCCAGATCTACCACGTCGTCAGCCGGAACGCGCTCGACATCGGGGAGGACCCCGCCGCGCCGCCCAGGGGAAAGACCATCGACGTCGGCGCCGCCAAGGACGAGGTCTCCCCCGTGAATACGGGCGGCTGCTGCTCGGCTTAG"""
 
-def score_guess(ks_guess, seqab, D, slen):
-    substitutions = int(ks_guess * slen + 0.5)
-    pos = partial(random.randint, 0, slen - 1)
-    repeats = 1000
-    outer_reps = 10
-    choice = random.choice
-
-    diffs = []
-    for rep in range(outer_reps):
-        random.seed()
-        ancestor = "".join(random.choice(seqab) for _ in range(slen))
-        for rep in xrange(repeats):
-            amut = bytearray(ancestor)
-            bmut = bytearray(ancestor)
-
-            for i in xrange(substitutions):
-                mut = choice((amut, bmut))
-                mut[pos()] = choice(seqab)
-
-            diff = sum(aa != bb for aa, bb in zip(amut, bmut))
-            diffs.append(diff)
-           
-    std = np.std(diffs)
-    diffs.sort()
-
-    idx0 = bisect.bisect_left(diffs, D - std)
-    idx1 = bisect.bisect_right(diffs, D + std)
-    n = (repeats * outer_reps) - abs(idx1 - idx0)
-    print ks_guess, n
-    return n
 
 def mleks(_seqa, _seqb):
 
@@ -59,26 +27,30 @@ def mleks(_seqa, _seqb):
     seqa = _seqa[2::3].upper()
     seqb = _seqb[2::3].upper()
 
-    seqa, seqb = zip(*((sab for sab in zip(seqa, seqb) if not "-" in sab)))
-    seqa = "".join(seqa)
-    seqb = "".join(seqb)
-    
+    ab = [sab for sab in zip(seqa, seqb) if not "-" in sab]
+    seqa = "".join([s[0] for s in ab])
+    seqb = "".join([s[1] for s in ab])
 
-    D = sum(aa != bb for aa, bb in zip(seqa, seqb))
+    D = sum([aa != bb for aa, bb in zip(seqa, seqb)])
 
     seqab = seqa + seqb
     slen = len(seqab)/2
 
     scores = {}
     # give the optimizer the best guess from this range.
-    kss = np.arange(0.25, 1.76, 0.25)
-    for guess in kss:
+    for guess in (0.3, 0.5, 0.75, 1.1, 1.5):
         scores[guess] = score_guess(guess, seqab, D, slen)
 
     best_guess = sorted(scores.items(), key=lambda a: (a[1], a[0]))[0][0]
-    r = so.fmin(score_guess, best_guess, args=(seqab, D, slen), disp=True, 
-                xtol=0.2, maxfun=20)
+    def fnopt(ks_guess):
+        return score_guess(ks_guess[0], seqab, D, slen)
+    r = so.fmin(fnopt, best_guess, args=(), disp=True, 
+                xtol=0.1, maxfun=20)
     return r[0]
 
 
+print mleks(a.replace("\n", ""), b.replace("\n", ""))
+print "trying again"
+print mleks(a.replace("\n", ""), b.replace("\n", ""))
+print "trying again"
 print mleks(a.replace("\n", ""), b.replace("\n", ""))
