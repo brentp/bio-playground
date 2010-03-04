@@ -13,7 +13,7 @@ def score_guess(ks_guess, seqab, D, slen):
     diffs = []
     for rep in range(outer_reps):
         random.seed()
-        ancestor = "".join([random.choice(seqab) for _ in range(slen)])
+        ancestor = "".join(random.choice(seqab) for _ in range(slen))
         for rep in xrange(repeats):
             amut = list(ancestor)
             bmut = list(ancestor)
@@ -22,7 +22,7 @@ def score_guess(ks_guess, seqab, D, slen):
                 mut = random.choice((amut, bmut))
                 mut[random.randint(0, slen - 1)] = random.choice(seqab)
 
-            diff = sum([aa != bb for aa, bb in zip(amut, bmut)])
+            diff = sum(int(aa != bb) for aa, bb in zip(amut, bmut))
             diffs.append(diff)
 
     diffs.sort()
@@ -34,5 +34,5 @@ def score_guess(ks_guess, seqab, D, slen):
 
 
 if __name__ == "__main__":
-    l = "ACCACCAAAGCGCGCGCGGGG"
-    score_guess(0.2, l, 12, len(l))
+    seq = "ACCACCAAAGCGCGCGCGGGG"
+    print score_guess(0.2, seq, 12, len(seq))
