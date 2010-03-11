@@ -12,7 +12,7 @@ AnnoJ.config = {
                 path : 'Annotation models',
 
                 //Pointing to a local service
-                data : '/bed/',
+                data : '/bed/brachy',
                 height : 180,
                 showControls : true
             },
@@ -27,7 +27,7 @@ AnnoJ.config = {
         
         //Address of service that provides information about this genome
         //genome    : '/proxy/arabidopsis_thaliana.php',
-        genome    : '/bed/genome',
+        genome    : '/bed/genome/brachy',
         
         //Address of service that stores / loads user bookmarks
         //bookmarks : '/bed/genome',
@@ -51,7 +51,7 @@ AnnoJ.config = {
         location : {
             assembly : 'Bd1',
             position : 1,
-            bases    : 20,
+            bases    : 80,
             pixels   : 1
         },
         
