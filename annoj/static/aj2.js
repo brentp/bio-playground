@@ -42,15 +42,6 @@ Math.simplify = function (n, d) {
     var gcd = Math.gcd(n, d);
     return [n / gcd, d / gcd]
 };
-Array.prototype.remove = function (item) {
-    for (var i = 0, len = this.length; i < len; i++) {
-        if (this[i] == item) {
-            this.splice(i, 1);
-            return true
-        }
-    }
-    return false
-};
 Array.prototype.insert = function (index, item) {
     var index = parseInt(index) || null;
     if (index == null || index >= this.length || index < 0) {
@@ -365,10 +356,8 @@ var BaseJS = (function () {
     function syndicate(params) {
         Ext.applyIf(params || {}, defaultRequest);
         request({
-            url: params.url || '',
-            data: {
-                action: 'syndicate'
-            },
+            url: (params.url || '') + '/syndicate',
+            data: {},
             requestJSON: false,
             receiveJSON: true,
             success: function (response) {
@@ -487,6 +476,12 @@ var AnnoJ = (function () {
             Ext.MessageBox.hide();
             WebApp.error('Unable to find configuation object (AnnoJ.config). The application cannot be built.');
             return false
+        }
+        for (var k in AnnoJ.config.tracks){
+            if (!AnnoJ.config.tracks.hasOwnProperty(k)) continue;
+            // remove trailing slashes.
+            var l = AnnoJ.config.tracks[k].data;
+            AnnoJ.config.tracks[k].data = l.replace(/\/$/, "");
         }
         Ext.apply(config, AnnoJ.config || {}, defaultConfig);
         Ext.MessageBox.updateProgress(0.15, '', 'Building GUI...');
@@ -1303,7 +1298,8 @@ AnnoJ.Navigator = function () {
         var assembly = new Ext.form.ComboBox({
             typeAhead: true,
             triggerAction: 'all',
-            width: 40,
+            // NOTE: need to make this dynamic depending on the lenght of the chr names.
+            width: 50,
             forceSelection: true,
             mode: 'local',
             displayField: 'id'
@@ -1530,7 +1526,7 @@ AnnoJ.Bookmarker = (function () {
         if (!server) return;
         BaseJS.request({
             url: server,
-            method: 'POST',
+            method: 'GET',
             request: {
                 action: 'load'
             },
@@ -1640,6 +1636,7 @@ AnnoJ.Messenger = (function () {
     };
 
     function alert(message, type, important) {
+        console.log(message)
         if (!type || (type != 'error' && type != 'warning' && type != 'notice')) type = 'notice';
         body.update("<div class='AJ_system_" + type + "'>" + message + "</div>" + body.dom.innerHTML)
     };
@@ -1706,7 +1703,7 @@ AnnoJ.InfoBox = function () {
 Ext.extend(AnnoJ.InfoBox, Ext.Panel);
 AnnoJ.AboutBox = (function () {
     var info = {
-        logo: "<a href='http://www.annoj.org'><img src='img/Anno-J.jpg' alt='Anno-J logo' /></a>",
+        logo: "<a href='http://www.annoj.org'><img src='http://www.annoj.org/img/Anno-J.jpg' alt='Anno-J logo' /></a>",
         version: 'Beta 1.1',
         engineer: 'Julian Tonti-Filippini',
         contact: 'tontij01(at)student.uwa.edu.au',
@@ -3000,7 +2997,7 @@ var RangeList = function () {
             rangeNode.level = 0;
             for (var node = inplay.first; node; node = node.next) {
                 if (node.value.x2 <= rangeNode.x1) {
-                    inplay.remove(node)
+                    inplay.remove(node);
                 }
             }
             for (var node = inplay.first; node; node = node.next) {
@@ -4263,7 +4260,7 @@ AnnoJ.DataTrack = function (userConfig) {
             self.setTitle('<span class="waiting">Communicating with server...</span>');
             var options = Ext.apply(options || {}, {}, {
                 url: self.config.datasource,
-                method: 'POST',
+                method: 'GET',
                 data: data || null,
                 success: function () {},
                 failure: function () {}
@@ -4559,11 +4556,10 @@ AnnoJ.BrowserTrack = function (userConfig) {
             views.loading = views.requested;
             var pos = frame2pos(frame);
             BaseJS.request({
-                url: self.config.data,
-                method: 'POST',
+                url: self.config.data + "/range",
+                method: 'GET',
                 requestJSON: false,
                 data: {
-                    action: 'range',
                     assembly: views.loading.assembly,
                     left: pos.left,
                     right: pos.right,
@@ -4989,11 +4985,10 @@ AnnoJ.ModelsTrack = function (userConfig) {
     function lookupModel(id) {
         AnnoJ.getGUI().InfoBox.echo("<div class='waiting'>Loading...</div>");
         BaseJS.request({
-            url: self.config.data,
+            url: self.config.data + "/describe",
             method: 'GET',
             requestJSON: false,
             data: {
-                action: 'describe',
                 id: id
             },
             success: function (response) {
