@@ -21,27 +21,6 @@
  * For access to the source, visit http://www.annoj.org
  *
  */
-
-Math.gcd = function (a, b) {
-    var a = a ? parseInt(a) : 1;
-    var b = b ? parseInt(b) : 1;
-    var n = a > b ? a : b;
-    var d = a > b ? b : a;
-    var r = 0;
-    while (true) {
-        r = n % d;
-        if (r == 0) break;
-        n = d;
-        d = r
-    }
-    return d
-};
-Math.simplify = function (n, d) {
-    var n = n ? parseInt(n) : 1;
-    var d = d ? parseInt(d) : 1;
-    var gcd = Math.gcd(n, d);
-    return [n / gcd, d / gcd]
-};
 Array.prototype.insert = function (index, item) {
     var index = parseInt(index) || null;
     if (index == null || index >= this.length || index < 0) {
@@ -1355,11 +1334,13 @@ AnnoJ.Navigator = function () {
         });
 
         function bindAssemblies(options, selected) {
+            console.log(options)
             if (!options || options.length == 0) return;
             var temp = [];
             Ext.each(options, function (item) {
-                temp.push(item.id)
+                temp.push([item.id])
             });
+            temp.sort()
             if (!selected) selected = temp[0];
             var store = new Ext.data.SimpleStore({
                 fields: ['id'],
