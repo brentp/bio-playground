@@ -1,7 +1,7 @@
 FileIndex
 =========
 
-index flat files. see: `blogpost <http://hackmap.blogspot.com/fileindex/>`_
+index flat files. see: `blogpost <http://hackmap.blogspot.com/2010/04/fileindex.html>`_
 example::
 
     >>> FileIndex.create(f, lambda fh: SamLine(fh).name, allow_multiple=True)
