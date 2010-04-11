@@ -11,7 +11,6 @@ import random
 
 from Bio import SeqIO
 
-f = "/usr/local/src/bowtie/bowtie-0.12.1/work/reads/s_1_sequence.txt"
 
 def get_rand_headers(fq, N=100000):
     """ get N random headers from a fastq file without reading the
@@ -30,7 +29,7 @@ def get_rand_headers(fq, N=100000):
         headers.append(header)
     assert len(headers) == N, (len(headers),)
     random.shuffle(headers)
-    return headers
+    return headers, records
 
 
 class FastQEntry(object):
@@ -93,12 +92,12 @@ def time_biopython_sqlite(f, random_seqs, name):
 
 if __name__ == "__main__":
 
-    f = os.path.abspath(f)
+    f = "/usr/local/src/bowtie/bowtie-0.12.1/work/reads/s_1_sequence.txt"
     N = 100000
 
-    rand_headers = get_rand_headers(f, N)
-    print "benchmarking fastq file with %i records" \
-            % (sum(1 for _ in open(f))/4)
+    rand_headers, nrecords = get_rand_headers(f, N)
+    print "benchmarking fastq file with %i records (%i lines)" \
+            % (nrecords, nrecords * 4)
     print "performing %i random queries" % len(rand_headers)
 
 
