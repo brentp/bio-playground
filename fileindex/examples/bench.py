@@ -5,7 +5,7 @@ sys.path.insert(0, "/usr/local/src/bio-playground/fileindex")
 sys.path.insert(0, "/usr/local/src/biopython-sqlite/")
 import screed
 import fileindex
-import bsddbfileindex
+#import bsddbfileindex
 import time
 import random
 
@@ -17,7 +17,7 @@ def get_rand_headers(fq, N=100000):
     whole thing into memory"""
     records = sum(1 for _ in open(fq)) / 4
     rand_records = sorted([random.randint(0, records) for _ in xrange(N)])
-    
+
     headers = []
     fh = open(fq)
     rec_no = -1
@@ -50,17 +50,18 @@ def show_name(name):
 
 def time_screed(f, random_seqs, name):
     show_name(name)
-    rm("%s_%s" % (f, screed.dbConstants.fileExtension))
+    rm("%s_%s" % (f, screed.DBConstants.fileExtension))
 
     t = time.time()
     screed.read_fastq_sequences(f)
     print "create: %.3f" % (time.time() - t)
 
-    faqdb = screed.screedDB(f)
+    faqdb = screed.ScreedDB(f)
     t = time.time()
     for r in random_seqs:
         faqdb[r[1:]].sequence
     print "search: %.3f" % (time.time() - t)
+    del faqdb
 
 def time_fileindex(f, random_seqs, name, klass):
     show_name(name)
@@ -74,37 +75,38 @@ def time_fileindex(f, random_seqs, name, klass):
     for r in random_seqs:
         fi[r].seq
     print "search: %.3f" % (time.time() - t)
+    del fi
 
 def time_biopython_sqlite(f, random_seqs, name):
     show_name(name)
-    idx = "%s.bidx" % f 
+    idx = "%s.bidx" % f
     rm(idx)
     t = time.time()
-    fi = SeqIO.indexed_dict(f, idx, "fastq")
+    fi = SeqIO.index(f, "fastq", db=idx)
     print "create: %.3f" % (time.time() - t)
 
     t = time.time()
     for r in random_seqs:
         fi[r[1:]].seq
     print "search: %.3f" % (time.time() - t)
+    del fi
 
 
 
 if __name__ == "__main__":
 
-    f = "/usr/local/src/bowtie/bowtie-0.12.1/work/reads/s_1_sequence.txt"
-    N = 100000
+    f = "/home/brentp/ssd/s.fastq"
+    f = "/opt/src/methylcode/data/s_1_sequence.txt"
+    N = 500000
 
     rand_headers, nrecords = get_rand_headers(f, N)
+    print f
     print "benchmarking fastq file with %i records (%i lines)" \
             % (nrecords, nrecords * 4)
     print "performing %i random queries" % len(rand_headers)
-
 
     time_screed(f, rand_headers, "screed")
 
     time_biopython_sqlite(f, rand_headers, "biopython-sqlite")
 
     time_fileindex(f, rand_headers, "fileindex", fileindex.FileIndex)
-
-    time_fileindex(f, rand_headers, "bsddbfileindex", bsddbfileindex.FileIndex)

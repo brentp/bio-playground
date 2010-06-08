@@ -1,4 +1,4 @@
-from tcdb.bdb import BDB
+from tcdb.bdb import BDBSimple as BDB
 import tcdb.bdb as tc
 
 class FileIndex(object):
@@ -12,14 +12,14 @@ class FileIndex(object):
         db = BDB()
         db.open(filename + cls.ext, bnum=bnum, lcnum=2**19,
                 omode=tc.OWRITER | tc.OTRUNC | tc.OCREAT,
-                apow=6, opts=tc.TLARGE, xmsiz=2**26)        
+                apow=6, opts=tc.TLARGE, xmsiz=2**26)
         pos = fh.tell()
         putter = db.putcat if allow_multiple else db.put
         while True:
             key = get_next(fh)
             if not key: break
             # always append the | but only used by multiple.
-            putter(key , str(pos) + "|", True, True)
+            putter(key , str(pos) + "|")
             # fh has been moved forward by get_next.
             pos = fh.tell()
         fh.close()
@@ -35,7 +35,7 @@ class FileIndex(object):
 
     def __getitem__(self, key):
         # every key has the | appended.
-        pos = self.db.get(key, None, True, str).rstrip("|")
+        pos = self.db.get(key).rstrip("|")
         if self.allow_multiple:
             results = []
             for p in pos.split("|"):
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             self.seq = fh.readline().rstrip('\r\n')
             self.l3 = fh.readline().rstrip('\r\n')
             self.qual = fh.readline().rstrip('\r\n')
- 
+
     def get_next(fh):
         name = fh.readline().strip()
         fh.readline(); fh.readline(); fh.readline()
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     print time.time() - t
 
     fi = FileIndex(f, FastQEntry)
-    N = 1000000 
+    N = 1000000
     NKeys = N
     print "getting %i keys..." % N
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     print "shuffling"
     random.shuffle(keys)
     keys = keys[:N]
-    print "timing" 
+    print "timing"
     t = time.time()
     for k in keys:
         entry = fi[k].name
