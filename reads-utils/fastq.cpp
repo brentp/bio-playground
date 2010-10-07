@@ -359,7 +359,7 @@ int parse_args(int argc, char *argv[], opts *o){
     else {
         return 1;
     }
-    if(o->adjust == -999){
+    if(o->adjust == -999 && o->filter_quality != DEFAULT && o->action == "filter"){
         error("must send in value for --adjust");
         return 1;
     }
