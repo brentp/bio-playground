@@ -29,6 +29,7 @@ const char *usage = "============================================\n"
     "     [filter_options] are\n:"
     "\t--quality [X] mask bases with quality < X to 'N'\n"
     "\t--n [X] exclude records with more than X 'N's (after above masking)\n"
+    "\t\tdefault 1000 is no masking. 4 is a reasonable value\n"
     "\t--unique after above filtering, print only unique sequences.\n"
     "\t(for those groups with more than one record, choose the one\n"
     "\t with the best quality\n. NOTE: order is not maintained\n."
@@ -304,7 +305,7 @@ int filter(opts o){
 
 int parse_args(int argc, char *argv[], opts *o){
     int i;
-    o->filter_n = 0;
+    o->filter_n = 1000;
     o->filter_unique = false;
     o->filter_quality = DEFAULT;
     o->summarize_codon = false;
