@@ -32,7 +32,7 @@ def pairwise(iterable):
 by_subject = {}
 seqids = []
 for seqid in fa.iterkeys():
-    by_subject[seqid] = np.zeros((len(fa[seqid]),), dtype=np.uint8)
+    by_subject[seqid] = np.zeros((len(fa[seqid]) + 1,), dtype=np.uint8)
     seqids.append((len(fa[seqid]),seqid))
 
 
@@ -41,7 +41,7 @@ for line in open(blast_file):
     args = line.split("\t")
     query, subject = args[0], args[1]
     sstart, sstop = sorted(map(int, args[8:10]))
-    by_subject[subject][sstart - 1: sstop] |= 1
+    by_subject[subject][sstart: sstop + 1] |= 1
     if not subject in by_query_subject[query]:
         by_query_subject[query][subject] = [(sstart, sstop)]
     else:
@@ -56,7 +56,7 @@ for query in by_query_subject:
         for alocs, blocs in pairwise(li):
 
             if blocs[0] - alocs[1] < NEAR_SAME:
-                by_subject[subject][alocs[1] - 1: blocs[0]] |= 1
+                by_subject[subject][alocs[1]: blocs[0] + 1] |= 1
 
 
 
@@ -69,10 +69,11 @@ for seqlen, seqid in sorted(seqids, reverse=True):
     ends,   = np.where((masks[:-1] == 1) & (masks[1:] == 0))
 
     for s, e in zip(starts, ends):
+        assert s < e, (s, e, seqid)
         # add 1 for 0-based and 1 for the [1:]
         start = s + 2
         end = e + 1
         name = "%s-%i-%i" % (seqid, start, end)
-        print "%s\t%i\t%i\t%s" % (seqid, s + 2, e + 1, name)
+        print "%s\t%i\t%i\t%s" % (seqid, s + 1, e, name)
         print >>out, ">" + name
         print >>out, fa[seqid][start - 1: end]
