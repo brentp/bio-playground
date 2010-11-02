@@ -45,7 +45,8 @@ def print_fastq(fc, fq):
         print "@%s" % seq_header[1:].strip()
         print cs2seq(cs.strip())
         print "+"
-        print "".join(chr(int(q) + 33) for q in qual)
+        # since the qual is 1 short, just add an extra here to the end.
+        print "".join(chr(int(q) + 33) for q in qual) + chr(int(qual[-1]) + 33)
 
 def print_fasta(fc):
     header = fc.readline()
