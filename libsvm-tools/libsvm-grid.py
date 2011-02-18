@@ -89,7 +89,10 @@ def do_split(full_dataset, split_pct):
     return names
 
 def main():
+    kernels = ["linear", "polynomial", "rbf", "sigmoid"]
     p = optparse.OptionParser(__doc__)
+    p.add_option("--kernel", dest="kernel", default="rbf",
+            help="one of %s" % "/".join(kernels))
     p.add_option("--c-range", dest="c_range", default="-7:12:2",
             help="log2 range of values in format start:stop:step [%default]")
     p.add_option("--g-range", dest="g_range", default="-15:7:2",
@@ -111,6 +114,13 @@ def main():
 
     opts, args = p.parse_args()
     if len(args) < 1 or not check_path(): sys.exit(p.print_help())
+    if not opts.kernel in kernels:
+        print >>sys.stderr, "** kernel must be one of %s" % ",".join(kernels)
+        sys.exit(p.print_help())
+
+    # convert to the number expected by libsvm
+    kernel = kernels.index(opts.kernel) + 1
+
 
     train_dataset = op.abspath(args[0])
     assert op.exists(train_dataset)
@@ -139,7 +149,7 @@ def main():
     results = {}
     print >>sys.stderr, "Training across %i gridded parameter groups in batches of %i" \
                     % (len(param_list), opts.n_threads)
-    cmd_tmpl = 'svm-train -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
+    cmd_tmpl = 'svm-train -t %(kernel)i -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
 
     while param_list:
         procs = []
@@ -164,7 +174,7 @@ def main():
             (valid_pct, c, g)
     if test_dataset is None: return True
 
-    cmd_tmpl = 'svm-train -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
+    cmd_tmpl = 'svm-train -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
     model_file = out_prefix + ".model"
     print "Saving model file to %s" % model_file
 
