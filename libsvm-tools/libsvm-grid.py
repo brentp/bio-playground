@@ -11,6 +11,7 @@ NOTE: this expects svm-train and svm-predict to be on your path. so you may call
 
 
 import sys
+import os
 import os.path as op
 import numpy as np
 import random
@@ -23,7 +24,6 @@ def check_path():
     """
     make sure the libsvm stuff is on the path
     """
-    import os
     paths = (op.abspath(p) for p in os.environ['PATH'].split(":"))
     for p in paths:
         if op.exists(op.join(p, "svm-train")): return True
@@ -36,39 +36,78 @@ def check_path():
 
     return False
 
-def scale(test_dataset, train_dataset, out_prefix):
+def up_to_date_b(a, b):
+    return op.exists(b) and os.stat(b).st_mtime >= os.stat(a).st_mtime
+
+def scale(train_dataset, test_dataset, out_prefix):
     cmd_tmpl = 'svm-train -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
 
     range_file = out_prefix + ".range"
     scaled_train = train_dataset + ".scale"
+    scaled_test = test_dataset + ".scale"
 
-    cmd = 'svm-scale -s "%(range_file)s" "%(train_dataset)s" > "%(scaled_train)s"' % locals()
-    p = Popen(cmd, shell=True, stdout=PIPE)
-    p.wait()
-    assert p.returncode == 0, (p.stdout.read())
+    # only rescale if the input dataset has changed.
+    if not (up_to_date_b(train_dataset, range_file) \
+            and up_to_date_b(train_dataset, scaled_train)):
+        print >>sys.stderr, "Scaling: %s" % train_dataset
+        cmd = 'svm-scale -s "%(range_file)s" "%(train_dataset)s" > "%(scaled_train)s"' % locals()
+        p = Popen(cmd, shell=True, stdout=PIPE)
+        p.wait()
+        assert p.returncode == 0, (p.stdout.read())
+
+    if not test_dataset:
+        return scale_train, test_dataset
 
     # scale the test file according to range in train file.
-    scaled_test = test_dataset + ".scale"
-    cmd = 'svm-scale -r "%(range_file)s" "%(test_dataset)s" > "%(scaled_test)s"' % locals()
-    p = Popen(cmd, shell=True, stdout=PIPE)
-    p.wait()
-    assert p.returncode == 0, (p.stdout.read())
+    if not (up_to_date_b(test_dataset, range_file) \
+            and up_to_date_b(test_dataset, scaled_test)):
+        print >>sys.stderr, "Scaling: %s" % test_dataset
+        cmd = 'svm-scale -r "%(range_file)s" "%(test_dataset)s" > "%(scaled_test)s"' % locals()
+        p = Popen(cmd, shell=True, stdout=PIPE)
+        p.wait()
+        assert p.returncode == 0, (p.stdout.read())
+
     return scaled_train, scaled_test
+
+def do_split(full_dataset, split_pct):
+    #n_lines = sum(1 for line in open(full_dataset) if line[0] != "#")
+    train_fh = open(full_dataset + ".train.split", "w")
+    test_fh = open(full_dataset + ".test.split", "w")
+
+    for line in open(full_dataset):
+        if line[0] == "#":
+            print >>train_fh, line,
+            print >>test_fh, line,
+            continue
+        r = random.random()
+        fh = test_fh if r > split_pct else train_fh
+        print >>fh, line,
+
+    train_fh.close(); test_fh.close()
+    names = train_fh.name, test_fh.name
+    print >>sys.stderr, "split to: %s, %s" % names
+    return names
 
 def main():
     p = optparse.OptionParser(__doc__)
-    p.add_option("--c-range", dest="c_range", default="-7:17:2",
+    p.add_option("--c-range", dest="c_range", default="-7:12:2",
             help="log2 range of values in format start:stop:step")
-    p.add_option("--g-range", dest="g_range", default="-18:7:2",
+    p.add_option("--g-range", dest="g_range", default="-15:7:2",
             help="log2 range of g values in format start:stop:step")
     p.add_option("--n-threads", dest="n_threads", default=cpu_count(), type='int',
             help="number of threads to use")
     p.add_option("--out-prefix", dest="out_prefix",
             help="where to send results")
-    p.add_option("--x-fold", dest="x_fold", type="int", default=5,
+    p.add_option("--x-fold", dest="x_fold", type="int", default=8,
             help="number for cross-fold validation on training set")
     p.add_option("--scale", dest="scale", action="store_true", default=False,
-            help="if specified, perform scaling (svm-scale) on the dataset(s)")
+            help="if specified, perform scaling (svm-scale) on the dataset(s)"
+                " before calling svm-train.")
+    p.add_option("--split", dest="split", type='float',
+            help="if specified split the training file into 2 files. one for"
+            " testing and one for training. --split 0.8 would use 80% of the lines"
+            " for training. the selection is random. this is used instead of"
+            " specifying a training file.")
 
     opts, args = p.parse_args()
     if len(args) < 1 or not check_path(): sys.exit(p.print_help())
@@ -77,6 +116,11 @@ def main():
     assert op.exists(train_dataset)
 
     test_dataset = op.abspath(args[1]) if len(args) > 1 else None
+    if opts.split:
+        assert test_dataset is None, ("cant split *and* specify a test dataset")
+        train_dataset, test_dataset = do_split(train_dataset, opts.split)
+
+
     if test_dataset: assert op.exists(test_dataset)
 
     c_range = np.arange(*map(float, opts.c_range.split(":")))
@@ -85,8 +129,6 @@ def main():
     out_prefix = opts.out_prefix if opts.out_prefix else op.splitext(train_dataset)[0]
     # set parameters
     param_list = list(gen_params(c_range, g_range))
-    print >>sys.stderr, "running %i parameter groups across a grid in batches of %i" \
-                    % (len(param_list), opts.n_threads)
 
     if opts.scale:
         print >>sys.stderr, "Scaling datasets"
@@ -95,7 +137,9 @@ def main():
     fold = opts.x_fold
     extra_params = ""
     results = {}
-    cmd_tmpl = 'svm-train -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
+    print >>sys.stderr, "Training across %i gridded parameter groups in batches of %i" \
+                    % (len(param_list), opts.n_threads)
+    cmd_tmpl = 'svm-train -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
 
     while param_list:
         procs = []
