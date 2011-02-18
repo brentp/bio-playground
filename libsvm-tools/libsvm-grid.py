@@ -93,9 +93,9 @@ def main():
     p = optparse.OptionParser(__doc__)
     p.add_option("--kernel", dest="kernel", default="rbf",
             help="one of %s" % "/".join(kernels))
-    p.add_option("--c-range", dest="c_range", default="-7:12:2",
+    p.add_option("--c-range", dest="c_range", default="-7:5:2",
             help="log2 range of values in format start:stop:step [%default]")
-    p.add_option("--g-range", dest="g_range", default="-15:7:2",
+    p.add_option("--g-range", dest="g_range", default="-16:4:2",
             help="log2 range of g values in format start:stop:step [%default]")
     p.add_option("--n-threads", dest="n_threads", default=cpu_count(), type='int',
             help="number of threads to use [%default]")
@@ -132,7 +132,7 @@ def main():
 
     out_prefix = opts.out_prefix if opts.out_prefix else op.splitext(train_dataset)[0]
     # set parameters
-    param_list = list(gen_params(c_range, g_range))
+    param_list = gen_params(c_range, g_range)
 
     if opts.scale:
         print >>sys.stderr, "Scaling datasets"
