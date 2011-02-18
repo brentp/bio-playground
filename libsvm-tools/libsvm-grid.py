@@ -91,23 +91,23 @@ def do_split(full_dataset, split_pct):
 def main():
     p = optparse.OptionParser(__doc__)
     p.add_option("--c-range", dest="c_range", default="-7:12:2",
-            help="log2 range of values in format start:stop:step")
+            help="log2 range of values in format start:stop:step [%default]")
     p.add_option("--g-range", dest="g_range", default="-15:7:2",
-            help="log2 range of g values in format start:stop:step")
+            help="log2 range of g values in format start:stop:step [%default]")
     p.add_option("--n-threads", dest="n_threads", default=cpu_count(), type='int',
-            help="number of threads to use")
+            help="number of threads to use [%default]")
     p.add_option("--out-prefix", dest="out_prefix",
             help="where to send results")
     p.add_option("--x-fold", dest="x_fold", type="int", default=8,
-            help="number for cross-fold validation on training set")
+            help="number for cross-fold validation on training set [%default]")
     p.add_option("--scale", dest="scale", action="store_true", default=False,
             help="if specified, perform scaling (svm-scale) on the dataset(s)"
-                " before calling svm-train.")
+                " before calling svm-train. [%default]")
     p.add_option("--split", dest="split", type='float',
             help="if specified split the training file into 2 files. one for"
-            " testing and one for training. --split 0.8 would use 80% of the lines"
-            " for training. the selection is random. this is used instead of"
-            " specifying a training file.")
+            " testing and one for training. --split 0.8 would use 80% of the"
+            " lines for training. the selection is random. this is used "
+            "instead of specifying a training file.")
 
     opts, args = p.parse_args()
     if len(args) < 1 or not check_path(): sys.exit(p.print_help())
@@ -123,8 +123,8 @@ def main():
 
     if test_dataset: assert op.exists(test_dataset)
 
-    c_range = np.arange(*map(float, opts.c_range.split(":")))
-    g_range = np.arange(*map(float, opts.g_range.split(":")))
+    c_range = map(float, opts.c_range.split(":"))
+    g_range = map(float, opts.g_range.split(":"))
 
     out_prefix = opts.out_prefix if opts.out_prefix else op.splitext(train_dataset)[0]
     # set parameters
@@ -180,22 +180,7 @@ def main():
 
 
 def gen_params(c_range, g_range):
-    random.shuffle(c_range)
-    random.shuffle(g_range)
-    nr_c = float(len(c_range))
-    nr_g = float(len(g_range))
-    i, j = 0, 0
-    while i < nr_c or j < nr_g:
-        if i/nr_c < j/nr_g:
-            # increase C resolution
-            for k in range(j):
-                yield((2**c_range[i], 2**g_range[k]))
-            i = i + 1
-        else:
-            # increase g resolution
-            for k in range(i):
-                yield((2**c_range[k], 2**g_range[j]))
-            j = j + 1
+    return [(2**c, 2**g) for c in np.arange(*c_range) for g in np.arange(*g_range)]
 
 if __name__ == "__main__":
     main()
