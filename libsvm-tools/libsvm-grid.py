@@ -44,7 +44,7 @@ def scale(train_dataset, test_dataset, out_prefix):
 
     range_file = out_prefix + ".range"
     scaled_train = train_dataset + ".scale"
-    scaled_test = test_dataset + ".scale"
+    scaled_test = test_dataset + ".scale" if test_dataset else None
 
     # only rescale if the input dataset has changed.
     if not (up_to_date_b(train_dataset, range_file) \
@@ -56,7 +56,7 @@ def scale(train_dataset, test_dataset, out_prefix):
         assert p.returncode == 0, (p.stdout.read())
 
     if not test_dataset:
-        return scale_train, test_dataset
+        return scaled_train, test_dataset
 
     # scale the test file according to range in train file.
     if not (up_to_date_b(test_dataset, range_file) \
@@ -121,16 +121,10 @@ def main():
     # convert to the number expected by libsvm
     kernel = kernels.index(opts.kernel) + 1
 
-
     train_dataset = op.abspath(args[0])
     assert op.exists(train_dataset)
 
     test_dataset = op.abspath(args[1]) if len(args) > 1 else None
-    if opts.split:
-        assert test_dataset is None, ("cant split *and* specify a test dataset")
-        train_dataset, test_dataset = do_split(train_dataset, opts.split)
-
-
     if test_dataset: assert op.exists(test_dataset)
 
     c_range = map(float, opts.c_range.split(":"))
@@ -143,6 +137,11 @@ def main():
     if opts.scale:
         print >>sys.stderr, "Scaling datasets"
         train_dataset, test_dataset = scale(train_dataset, test_dataset, out_prefix)
+    if opts.split:
+        assert test_dataset is None, ("cant split *and* specify a test dataset")
+        train_dataset, test_dataset = do_split(train_dataset, opts.split)
+
+    param_fh = open(out_prefix + ".params", "w")
 
     fold = opts.x_fold
     extra_params = ""
@@ -165,13 +164,13 @@ def main():
                 validation = float(line.split()[-1][0:-1])
                 if results and validation > max(results.keys()): line = line.strip() + " *BEST*\n"
                 results[validation] = (c, g)
-
-                #print >>sys.stderr, "ran: %s\n%s" % (cmd, line)
+                print >>param_fh, "-c %s, -g %s # accuracy: %s" % (c, g, validation)
 
     # grab the best one.
     valid_pct, (c, g) = sorted(results.items())[-1]
     print "Best Cross Validation Accuracy: %.2f with parameters c:%s,  g:%s" %\
             (valid_pct, c, g)
+    print "wrote all params and accuracies to:", param_fh.name
     if test_dataset is None: return True
 
     cmd_tmpl = 'svm-train -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
