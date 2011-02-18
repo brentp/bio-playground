@@ -88,6 +88,35 @@ def do_split(full_dataset, split_pct):
     print >>sys.stderr, "split to: %s, %s" % names
     return names
 
+def roc(actual, predicted):
+    """
+    code taken from scikits.learn.metrics: 
+        http://scikit-learn.sourceforge.net/index.html(thanks).
+
+
+    """
+
+    actual = np.array(actual)
+    predicted = np.array(predicted)
+    thresholds = np.sort(np.unique(predicted))[::-1]
+    n_thresholds = thresholds.size
+
+    tpr = np.empty(n_thresholds) # True positive rate
+    fpr = np.empty(n_thresholds) # False positive rate
+    n_pos = float(np.sum(actual == 1)) # nb of true positive
+    n_neg = float(np.sum(actual == 0)) # nb of true negative
+
+    for i, t in enumerate(thresholds):
+        tpr[i] = np.sum(actual[predicted >= t] == 1) / n_pos
+        fpr[i] = np.sum(actual[predicted >= t] == 0) / n_neg
+
+    h = np.diff(fpr)
+    auc = np.sum(h * (tpr[1:] + tpr[:-1])) / 2.0
+
+    print "\n".join(("%.4f,%.4f" % (f, t) for (f, t) in zip(fpr, tpr)))
+    print "#auc:", auc
+
+
 def main():
     kernels = ["linear", "polynomial", "rbf", "sigmoid"]
     p = optparse.OptionParser(__doc__)
@@ -148,10 +177,13 @@ def main():
     results = {}
     print >>sys.stderr, "Training across %i gridded parameter groups in batches of %i" \
                     % (len(param_list), opts.n_threads)
-    cmd_tmpl = 'svm-train -t %(kernel)i -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
+    # TODO: add -b param
+    cmd_tmpl = 'svm-train -b 0 -t %(kernel)i -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
 
     while param_list:
         procs = []
+        print len(param_list), "remaining\r",
+        sys.stdout.flush()
         for i in range(opts.n_threads):
             if not param_list: break
             c, g = param_list.pop()
@@ -173,19 +205,25 @@ def main():
     print "wrote all params and accuracies to:", param_fh.name
     if test_dataset is None: return True
 
-    cmd_tmpl = 'svm-train -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
+    # TODO: add -b param
+    cmd_tmpl = 'svm-train -b 0 -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
     model_file = out_prefix + ".model"
     print "Saving model file to %s" % model_file
 
     # run once more and save the .model file for the best scoring params.
     Popen(cmd_tmpl % locals(), shell=True, stdout=PIPE).wait()
 
-
     # now run the test dataset through svm-predict with best parameters
-    #./svm-predict -b 0 /tmp/charm.svm.test /tmp/charm.svm.model /tmp/out.predict
-    cmd_tmpl = "svm-predict %(test_dataset)s %(model_file)s %(out_prefix)s.predict"
+    predict_file = out_prefix + ".predict"
+    # TODO: add -b param
+    cmd_tmpl = "svm-predict -b 0 %(test_dataset)s %(model_file)s %(predict_file)s"
     p = Popen(cmd_tmpl % locals(), shell=True, stdout=PIPE)
     print p.stdout.read().strip()
+
+    # TODO: this will change when -b is used.
+    #predicted_vals = [int(line.strip()) for line in open(predict_file)]
+    #actual_vals = [int(line.split()[0]) for line in open(test_dataset)]
+    #roc(actual_vals, predicted_vals)
 
 
 def gen_params(c_range, g_range):
