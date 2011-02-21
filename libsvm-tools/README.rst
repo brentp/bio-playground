@@ -9,9 +9,9 @@ with `libsvm`_. It's usage looks like::
       -h, --help            show this help message and exit
       --kernel=KERNEL       one of linear/polynomial/rbf/sigmoid
       --c-range=C_RANGE     log2 range of values in format start:stop:step
-                            [-7:12:2]
+                            [-7:5:2]
       --g-range=G_RANGE     log2 range of g values in format start:stop:step
-                            [-15:7:2]
+                            [-16:4:2]
       --n-threads=N_THREADS
                             number of threads to use [4]
       --out-prefix=OUT_PREFIX
@@ -24,7 +24,8 @@ with `libsvm`_. It's usage looks like::
                             use 80% of the lines for training. the selection is
                             random. this is used instead of specifying a training
                             file.
-
+      -b, --probability     calculate and store prediction as a probability rather
+                            than a class. [False]
 
 It expects `svm-train`, `svm-predict`, and `svm-scale` to be on the path
 so it may be called like::
@@ -43,11 +44,10 @@ The output will be something like::
 In addition to the files some.train-data.scale and some-test-data.scale and some-test-data.model if a test set is specified.
 
 
-TODO
-----
-
-Output file for AUC/ROC-curve
-
+ROC
+---
+If the `-b` parameter is specified, it will print an AUC value and write a file
+with x,y values which can be used to plot an ROC-curve.
 
 .. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
