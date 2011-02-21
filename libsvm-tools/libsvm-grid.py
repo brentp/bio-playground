@@ -88,16 +88,16 @@ def do_split(full_dataset, split_pct):
     print >>sys.stderr, "split to: %s, %s" % names
     return names
 
-def roc(actual, predicted):
+def roc(actual, predicted, out_file):
     """
     code taken from scikits.learn.metrics: 
         http://scikit-learn.sourceforge.net/index.html(thanks).
-
-
     """
-
     actual = np.array(actual)
     predicted = np.array(predicted)
+
+    actual[actual != 1] = 0
+
     thresholds = np.sort(np.unique(predicted))[::-1]
     n_thresholds = thresholds.size
 
@@ -113,8 +113,8 @@ def roc(actual, predicted):
     h = np.diff(fpr)
     auc = np.sum(h * (tpr[1:] + tpr[:-1])) / 2.0
 
-    print "\n".join(("%.4f,%.4f" % (f, t) for (f, t) in zip(fpr, tpr)))
-    print "#auc:", auc
+    print >>open(out_file, "w"), "\n".join(("%.4f,%.4f" % (f, t) for (f, t) in zip(fpr, tpr)))
+    return auc
 
 
 def main():
@@ -140,6 +140,9 @@ def main():
             " testing and one for training. --split 0.8 would use 80% of the"
             " lines for training. the selection is random. this is used "
             "instead of specifying a training file.")
+    p.add_option("-b", "--probability", dest="b", action="store_true", default=False,
+            help="calculate and store prediction as a probability rather "
+            " than a class. [%default]")
 
     opts, args = p.parse_args()
     if len(args) < 1 or not check_path(): sys.exit(p.print_help())
@@ -172,13 +175,12 @@ def main():
 
     param_fh = open(out_prefix + ".params", "w")
 
-    fold = opts.x_fold
+    b, fold = int(opts.b), opts.x_fold
     extra_params = ""
     results = {}
     print >>sys.stderr, "Training across %i gridded parameter groups in batches of %i" \
                     % (len(param_list), opts.n_threads)
-    # TODO: add -b param
-    cmd_tmpl = 'svm-train -b 0 -t %(kernel)i -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
+    cmd_tmpl = 'svm-train -b %(b)i -t %(kernel)i -m 1000 -c %(c)f -g %(g)f -v %(fold)i %(extra_params)s %(train_dataset)s'
 
     while param_list:
         procs = []
@@ -205,8 +207,7 @@ def main():
     print "wrote all params and accuracies to:", param_fh.name
     if test_dataset is None: return True
 
-    # TODO: add -b param
-    cmd_tmpl = 'svm-train -b 0 -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
+    cmd_tmpl = 'svm-train -b %(b)i -t %(kernel)i -c %(c)f -g %(g)f %(extra_params)s %(train_dataset)s %(model_file)s'
     model_file = out_prefix + ".model"
     print "Saving model file to %s" % model_file
 
@@ -216,14 +217,17 @@ def main():
     # now run the test dataset through svm-predict with best parameters
     predict_file = out_prefix + ".predict"
     # TODO: add -b param
-    cmd_tmpl = "svm-predict -b 0 %(test_dataset)s %(model_file)s %(predict_file)s"
+    cmd_tmpl = "svm-predict -b %(b)i %(test_dataset)s %(model_file)s %(predict_file)s"
     p = Popen(cmd_tmpl % locals(), shell=True, stdout=PIPE)
     print p.stdout.read().strip()
 
-    # TODO: this will change when -b is used.
-    #predicted_vals = [int(line.strip()) for line in open(predict_file)]
-    #actual_vals = [int(line.split()[0]) for line in open(test_dataset)]
-    #roc(actual_vals, predicted_vals)
+    # can only do roc if b is 1.
+    if b == 1:
+        predicted = [float(line.split(" ")[1]) for line in open(predict_file) \
+                                if not line.startswith('labels')]
+
+        actual = [int(line.split()[0]) for line in open(test_dataset)]
+        print "AUC:", roc(actual, predicted, out_prefix + ".roc.txt")
 
 
 def gen_params(c_range, g_range):
