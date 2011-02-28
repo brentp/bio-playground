@@ -3,6 +3,7 @@ Lowess
 
 Lowess is locally weight polynomial regression.
 This is a Cython wrapper to the implementation in `R <http://www.r-project-org/>`_
+That implementation is GPL v2, so this is GPL as well.
 
 Usage
 =====
