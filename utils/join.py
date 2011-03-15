@@ -1,26 +1,50 @@
 """
     %prog [options] filea:col# fileb:col#
 
+e.g.
+
+    %prog --sepa , --sepb , f1.txt:2 f3.txt:5
+
 join filea with fileb by looking for the same value in col#
 
-col numbers are 0-based indexing.
+col numbers are 0-based indexing. can key on multiple columns:
 
-can never get linux join to work as i want.
+    %prob f1.txt:2:4 f3.txt:5:7
+
+will use columns 2 and 4 and check agains columns 5 and 7.
 """
 import optparse
 import sys
 
-def join(fa, cola, fb, colb, sepa, sepb, remove):
+def join(fa, colsa, fb, colsb, sepa, sepb, remove):
     bgen = (line.rstrip("\n") for line in open(fb))
-    bdict = dict((line.split(sepb)[colb], line) for line in bgen)
-    for line in open(fa):
-        toks = line.split(sepa)
-        key = toks[cola]
-        bstuff = bdict.get(key, "").split(sepb)
-        if remove and bstuff:
-            del bstuff[colb]
-        print line.strip("\r\n") + sepa + sepa.join(bstuff)
+    bdict = {}
+    for line in bgen:
+        # can have multiple keys and keep the header in case
+        # file a has one also.
+        if line[0] == "#":
+            bdict['header'] = line
+            continue
+        toks = line.split(sepb)
+        key = tuple(toks[ib] for ib in colsb)
+        bdict[key] = line
 
+    mismatches = 0
+    for line in open(fa):
+        if line[0] == "#":
+            bstuff = bdict.get('header', '').split(sepb)
+            print line[1:].rstrip("\r\n") + sepa + sepa.join(bstuff)
+            continue
+
+        toks = line.split(sepa)
+        key = tuple(toks[cola] for cola in colsa)
+        bstuff = bdict.get(key, "").split(sepb)
+        mismatches += int(bstuff ==[])
+        if remove and bstuff and bstuff[0]:
+            for colb in sorted(colsb, reverse=True):
+                del bstuff[colb]
+        print line.strip("\r\n") + sepa + sepa.join(bstuff)
+    print >>sys.stderr, "%i lines did not match" % mismatches
 
 def main():
     p = optparse.OptionParser(__doc__)
@@ -31,9 +55,12 @@ def main():
     opts, args = p.parse_args()
     if (len(args) != 2):
         sys.exit(not p.print_help())
-    fa, cola = args[0].split(":")
-    fb, colb = args[1].split(":")
-    join(fa, int(cola), fb, int(colb), opts.sepa, opts.sepb, opts.x)
+    a = args[0].split(":")
+    fa, colsa = a[0], a[1:]
+    b = args[1].split(":")
+    fb, colsb = b[0], b[1:]
+
+    join(fa, map(int, colsa), fb, map(int, colsb), opts.sepa, opts.sepb, opts.x)
 
 if __name__ == "__main__":
     main()
