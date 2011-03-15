@@ -23,7 +23,7 @@ def join(fa, colsa, fb, colsb, sepa, sepb, remove):
         # can have multiple keys and keep the header in case
         # file a has one also.
         if line[0] == "#":
-            bdict['header'] = line
+            bdict['header'] = line[1:]
             continue
         toks = line.split(sepb)
         key = tuple(toks[ib] for ib in colsb)
@@ -33,13 +33,13 @@ def join(fa, colsa, fb, colsb, sepa, sepb, remove):
     for line in open(fa):
         if line[0] == "#":
             bstuff = bdict.get('header', '').split(sepb)
-            print line[1:].rstrip("\r\n") + sepa + sepa.join(bstuff)
+            print line.rstrip("\r\n") + sepa + sepa.join(bstuff)
             continue
 
         toks = line.split(sepa)
         key = tuple(toks[cola] for cola in colsa)
         bstuff = bdict.get(key, "").split(sepb)
-        mismatches += int(bstuff ==[])
+        mismatches += int(bstuff == [''])
         if remove and bstuff and bstuff[0]:
             for colb in sorted(colsb, reverse=True):
                 del bstuff[colb]
