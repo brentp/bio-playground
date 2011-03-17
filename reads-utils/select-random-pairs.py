@@ -23,6 +23,7 @@ def write_random_records(fqa, fqb, N=100000):
     fha, fhb = open(fqa),  open(fqb)
     suba, subb = open(fqa + ".subset", "w"), open(fqb + ".subset", "w")
     rec_no = -1
+    written = 0
     for rr in rand_records:
         while rec_no < rr:
             for i in range(4): fha.readline()
@@ -31,6 +32,9 @@ def write_random_records(fqa, fqb, N=100000):
         for i in range(4):
             suba.write(fha.readline())
             subb.write(fhb.readline())
+        rec_no += 1
+        written += 1
+    assert written == N
 
     print >>sys.stderr, "wrote to %s, %s" % (suba.name, subb.name)
 
