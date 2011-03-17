@@ -63,6 +63,8 @@ Calling on All Samples / Using Read Groups
         the reads anyway. In addition, if no @RG lines are present, each
         alignment file is taken as one sample."
 
+    + also see: http://www.broadinstitute.org/gsa/wiki/index.php/Frequently_Asked_Questions#My_BAM_file_doesn.27t_have_read_group_and_sample_information.__Do_I_really_need_it.3F
+
 Parameters
 ----------
 
