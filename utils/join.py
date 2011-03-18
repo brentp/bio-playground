@@ -44,7 +44,8 @@ def join(fa, colsa, fb, colsb, sepa, sepb, remove):
         mismatches += int(bstuff == [''])
         if remove and bstuff and bstuff[0]:
             for colb in sorted(colsb, reverse=True):
-                del bstuff[colb]
+                if bstuff != ['']: del bstuff[colb]
+
         print line.strip("\r\n") + sepa + sepa.join(bstuff)
     print >>sys.stderr, "%i lines did not match" % mismatches
 
