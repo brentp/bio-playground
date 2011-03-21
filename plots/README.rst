@@ -8,6 +8,10 @@ chromosome, x, p-value.
 Offers a number of command-line options and the code is simple
 enough that it can be further customized.
 
+The input file(s) (or stdin via -) can be in any format but
+the user must specify which columns to extract for chr, x, p
+using the --cols parameter.
+
 Usage::
 
     manhattan-plot.py [options] files
@@ -38,7 +42,7 @@ generates
 
 there are a number of options, including adding custom colors.
 
-    $ python manhattan-plot.py --colors rgbk --cols 0,1,6 input.bed
+    $ python manhattan-plot.py --colors rgbk --cols 0,1,6 input.bed --image manhattan.rgbk.png
 
 generates
 
