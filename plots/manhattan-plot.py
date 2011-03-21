@@ -40,7 +40,7 @@ def chr_loc_cmp(alocs, blocs):
 
 
 
-def manhattan(fhs, columns, image_path, no_log, colors, sep, title, lines):
+def manhattan(fhs, columns, image_path, no_log, colors, sep, title, lines, ymax):
 
     xs = []
     ys = []
@@ -85,6 +85,7 @@ def manhattan(fhs, columns, image_path, no_log, colors, sep, title, lines):
     plt.axis('tight')
     plt.xlim(0, xs[-1])
     plt.ylim(ymin=0)
+    if ymax is not None: plt.ylim(ymax=ymax)
     plt.xticks([c[1] for c in xs_by_chr], [c[0] for c in xs_by_chr], rotation=-90, size=8.5)
     print >>sys.stderr, "saving to: %s" % image_path
     plt.savefig(image_path)
@@ -106,6 +107,7 @@ def main():
     p.add_option("--image", dest="image", help="save the image to this file. e.g. %default",
                 default="manhattan.png")
     p.add_option("--title", help="title for the image.", default=None, dest="title")
+    p.add_option("--ymax", help="max (logged) y-value for plot", dest="ymax", type='float')
     p.add_option("--sep", help="data separator, default is [tab]",
             default="\t", dest="sep")
     p.add_option("--lines", default=False, dest="lines", action="store_true",
@@ -118,7 +120,7 @@ def main():
     fhs = get_filehandles(args)
     columns = map(int, opts.cols.split(","))
     manhattan(fhs, columns, opts.image, opts.no_log, opts.colors, opts.sep,
-            opts.title, opts.lines)
+            opts.title, opts.lines, opts.ymax)
 
 
 if __name__ == "__main__":

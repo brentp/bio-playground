@@ -27,6 +27,7 @@ Usage::
       --colors=COLORS  cycle through these colors
       --image=IMAGE    save the image to this file. e.g. manhattan.png
       --title=TITLE    title for the image.
+      --ymax=YMAX      max (logged) y-value for plot
       --sep=SEP        data separator, default is [tab]
       --lines          plot the p-values as lines extending from the x-axis rather
                        than points in space
