@@ -34,7 +34,7 @@ a command like::
 
 generates
 
-.. image:: http://github.com/brentp/bio-playground/raw/master/plots/images/manhattan.png
+.. image:: https://github.com/brentp/bio-playground/raw/master/plots/images/manhattan.png
 
 there are a number of options, including adding custom colors.
 
@@ -42,5 +42,5 @@ there are a number of options, including adding custom colors.
 
 generates
 
-.. image:: http://github.com/brentp/bio-playground/raw/master/plots/images/manhattan.rgbk.png
+.. image:: https://github.com/brentp/bio-playground/raw/master/plots/images/manhattan.rgbk.png
 
