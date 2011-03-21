@@ -77,8 +77,10 @@ def manhattan(fhs, columns, image_path, no_log, colors, sep, title, lines, ymax)
         plt.title(title)
 
     ax.set_ylabel('-log10(p-value)')
-    # TODO: lines.
-    ax.scatter(xs, ys, s=2, c=cs, alpha=0.8, edgecolors='none')
+    if lines:
+        ax.vlines(xs, 0, ys, colors=cs, alpha=0.5)
+    else:
+        ax.scatter(xs, ys, s=2, c=cs, alpha=0.8, edgecolors='none')
 
     # plot 0.05 line after multiple testing.
     ax.axhline(y=-np.log10(0.05 / len(data)), color='0.5', linewidth=2)
@@ -112,7 +114,7 @@ def main():
             default="\t", dest="sep")
     p.add_option("--lines", default=False, dest="lines", action="store_true",
         help="plot the p-values as lines extending from the x-axis rather than"
-             " points in space")
+             " points in space. plotting will take longer with this option.")
 
     opts, args = p.parse_args()
     if (len(args) == 0):

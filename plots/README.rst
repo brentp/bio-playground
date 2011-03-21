@@ -30,7 +30,8 @@ Usage::
       --ymax=YMAX      max (logged) y-value for plot
       --sep=SEP        data separator, default is [tab]
       --lines          plot the p-values as lines extending from the x-axis rather
-                       than points in space
+                       than points in space. plotting will take longer with this
+                       option.
 
 
 a command like::
