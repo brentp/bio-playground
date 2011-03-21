@@ -38,7 +38,7 @@ generates
 
 there are a number of options, including adding custom colors.
 
-    $ python manhattan-plot.py --cols 0,1,6 input.bed
+    $ python manhattan-plot.py --colors rgbk --cols 0,1,6 input.bed
 
 generates
 
