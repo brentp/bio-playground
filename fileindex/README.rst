@@ -9,3 +9,10 @@ example::
     >>> [(s.name, s.ref_seqid, s.ref_loc) for s in fi['23351265']]
     [('23351265', '2', 8524), ('23351265', '3', 14202495)]
 
+
+Installation
+------------
+
+requires `py-tcdb` (and tokyo-cabinet headers)::
+
+    easy_install -UZ py-tcdb

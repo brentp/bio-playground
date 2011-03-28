@@ -42,9 +42,12 @@ class FileIndex(object):
                 self.fh.seek(long(p))
                 results.append(self.call_class(self.fh))
             return results
-                
+
         self.fh.seek(long(pos))
         return self.call_class(self.fh)
+
+    def __contains__(self, key):
+        return key in self.db
 
 if __name__ == "__main__":
     import time
