@@ -19,18 +19,31 @@ Getting a bed file from UCSC
 ----------------------------
 
   + From the `UCSC table browser`_ choose
+
     - genome: Human
+
     - assembly:  NCBI36/hg18
+
     - group: Genes and Gene Prediction Tracks
+
     - track: UCSC Genes
+
     - table: knownGene
+
     - output format "selected fileds from primary and related tables"
+
     - in text box, name it "knownGene.hg18.stuff.txt"
+
     - *click* "get output"
+
     - *check* kgXref under 'Linked Tables'
+
     - *click* 'Allow Selection From Checked Tables' at bottom of page.
+
     - *check* 'geneSymbol' from hg18.kgXref fields section
+
     - *click* 'get output' and a file named 'knownGene.hg18.stuff.txt' will be saved to your downloads directory. move it to your current directory.
+
 
   + To get this into bed format copy and paste this onto the command-line::
 
