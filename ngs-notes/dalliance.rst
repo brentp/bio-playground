@@ -47,18 +47,21 @@ Getting a bed file from UCSC
 
   + To get this into bed format copy and paste this onto the command-line::
 
-        grep -v '#' knownGene.hg18.stuff.txt | awk 'BEGIN { OFS = "\t"; } ;
-        {   split($9, astarts, /,/);
-            split($10, aends, /,/);
-            starts=""
-            ends=""
-            for(i in astarts){
-                if (! astarts[i]) continue
-                ends=ends(aends[i] - astarts[i])","
-                starts=starts(astarts[i] = astarts[i] - $4)","
-            }
-            print $2,$4,$5,$1","toupper($13),1,$3,$6,$5,".",$8,ends,starts
-        }' | sort -k1,1 -k2,2n > knownGene.hg18.bed
+        grep -v '#' knownGene.hg18.stuff.txt | awk '
+                    BEGIN { OFS = "\t"; } ;
+                        {   split($7, astarts, /,/);
+                            split($8, aends, /,/);
+                            starts=""
+                            sizes=""
+                            exonCount=0
+                            for(i=0; i < length(astarts); i++){
+                                if (! astarts[i]) continue
+                                sizes=sizes""(aends[i] - astarts[i])","
+                                starts=starts""(astarts[i] = astarts[i] - $2)","
+                                exonCount=exonCount + 1
+                            }
+                            print $1,$2,$3,$5","$4,1,$6,$2,$3,".",exonCount,sizes,starts
+                        }' | sort -k1,1 -k2,2n > knownGene.hg18.bed
 
 
   + To create a `BigBed`_ from this, do (note if you're not on a 64 bit
@@ -79,20 +82,21 @@ SQL
 UCSC also has a public mysql server so the process of downloading to a bed can be simplified to::
     
     mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -D hg18 -P 3306   -e "select chrom,txStart,txEnd,K.name,X.geneSymbol,strand,exonStarts,exonEnds from knownGene as K,kgXref as X where  X.kgId=K.name;" > tmp.notbed
-    grep -v txStart tmp.notbed | awk 'BEGIN { OFS = "\t"; } ;
-        {   split($7, astarts, /,/);
-            split($8, aends, /,/);
-            starts=""
-            sizes=""
-            exonCount=0
-            for(i in astarts){
-                if (! astarts[i]) continue
-                sizes=sizes""(aends[i] - astarts[i])","
-                starts=starts""(astarts[i] = astarts[i] - $2)","
-                exonCount=exonCount + 1
-            }
-            print $1,$2,$3,$4","$5,1,$6,$2,$3,".",exonCount,sizes,starts
-        }' | sort -k1,1 -k2,2n > knownGene.hg18.bed
+    grep -v txStart tmp.notbed | awk '
+            BEGIN { OFS = "\t"; } ;
+                {   split($7, astarts, /,/);
+                    split($8, aends, /,/);
+                    starts=""
+                    sizes=""
+                    exonCount=0
+                    for(i=0; i < length(astarts); i++){
+                        if (! astarts[i]) continue
+                        sizes=sizes""(aends[i] - astarts[i])","
+                        starts=starts""(astarts[i] = astarts[i] - $2)","
+                        exonCount=exonCount + 1
+                    }
+                    print $1,$2,$3,$5","$4,1,$6,$2,$3,".",exonCount,sizes,starts
+                }' | sort -k1,1 -k2,2n > knownGene.hg18.bed
 
 then proceed as the last steps above to create the big bed file.
 
