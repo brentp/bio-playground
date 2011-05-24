@@ -65,22 +65,44 @@ def overlapping(a, b):
 def nearest(a, b):
     a_not_overlapping = a.intersect(b, v=True)
     ab = a_not_overlapping.closest(b, t="all")
-    fh = open(BedTool._tmp(), "w")
+
+    by_name = collections.defaultdict(list)
     for row in ab:
-        fields = row.fields
-        astart, aend = row.start, row.end
-        bstart, bend = int(fields[7]), int(fields[8])
-        # TODO: handle ties in distance.
-        if bstart >= aend:
-            dist = bstart - aend
-        elif astart >= bend:
-            dist = astart - bend
-        else:
-            1/0
-        line = row[3].split("Z_Z") + [row[9], str(dist)]
-        fh.write("\t".join(line) + "\n")
+        by_name[str(row[3])].append(row)
+
+    fh = open(BedTool._tmp(), "w")
+    seen = set()
+
+    for name, rows in by_name.iteritems():
+        # TODO: just like above.
+        full_names = [r[9] for r in rows]
+
+        dists = [get_dist(r) for r in rows]
+        if len(set(dists)) == 1: 
+            dists = set(dists)
+            full_names = set(full_names)
+        dists = ";".join(map(str, dists))
+        names = ";".join(full_names)
+
+        line = "\t".join(name.split("Z_Z") + [names, dists])
+        if line in seen: continue
+        seen.add(line)
+        fh.write(line + "\n")
     fh.close()
     return fh.name
+
+def get_dist(row):
+    fields = row.fields
+    astart, aend = row.start, row.end
+    bstart, bend = int(fields[7]), int(fields[8])
+    # TODO: handle ties in distance.
+    if bstart >= aend:
+        dist = (bstart - aend) + 1
+    elif astart >= bend:
+        dist = bend - astart
+    else:
+        1/0
+    return dist
 
 def superanno(abed, bbed, has_header):
     out = sys.stdout
