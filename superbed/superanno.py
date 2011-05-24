@@ -69,12 +69,11 @@ def nearest(a, b):
     for row in ab:
         fields = row.fields
         astart, aend = row.start, row.end
-        print fields
         bstart, bend = int(fields[7]), int(fields[8])
         # TODO: handle ties in distance.
-        if bstart > aend:
+        if bstart >= aend:
             dist = bstart - aend
-        elif astart > bend:
+        elif astart >= bend:
             dist = astart - bend
         else:
             1/0
