@@ -43,13 +43,15 @@ def main(adaptors, M, t, l, fastqs, sanger=False):
     print >>sys.stderr, "writing %s and %s" % (trima.name, trimb.name)
 
     ra, rb = next_record(fha), next_record(fhb)
-    seen = {}
+    seen = set()
     for header in fhr_headers:
-        seen[header] = True
+        seen.add(header)
         if header == ra[0][:-2] == rb[0][:-2]:
             print >>trima, "\n".join(ra)
             print >>trimb, "\n".join(rb)
             ra, rb = next_record(fha), next_record(fhb)
+            # can clear the set since we just found a match.
+            seen.clear()
 
         while ra[0][:-2] in seen:
             ra = next_record(fha)
