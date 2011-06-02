@@ -12,13 +12,10 @@ import sys
 FASTX_CLIPPER="fastx_clipper"
 FASTQ_QUALITY_TRIMMER="fastq_quality_trimmer"
 
-def next_record(fh):
-    return [fh.readline().strip() for i in range(4)]
-
-def main(adaptors, M, t, l, fastqs, sanger=False):
+def main(adaptors, M, t, min_len, fastqs, sanger=False):
     cmds = []
     for fastq in fastqs:
-        trim_cmd = "%s -t %i -l %i" % (FASTQ_QUALITY_TRIMMER, t, l)
+        trim_cmd = "%s -t %i" % (FASTQ_QUALITY_TRIMMER, t)
         if sanger: trim_cmd += " -Q 33"
 
         clip_cmds = []
@@ -30,32 +27,25 @@ def main(adaptors, M, t, l, fastqs, sanger=False):
         print "[running]:", cmds[-1]
     procs = [Popen(cmd, stdout=PIPE, shell=True) for cmd in cmds]
 
-    # no temporary file, just read from stdouts.
-    fha, fhb = procs[0].stdout, procs[1].stdout
-    fhr = open(fastqs[0])
-    # strip the /2 or /1 and grab only the headers.
-    fhr_headers = (x.strip()[:-2] for i, x in enumerate(fhr) if not (i % 4))
+    def gen_pairs(fha, fhb):
+        aread, bread = fha.readline, fhb.readline
+        while True:
+            a = [aread().rstrip("\r\n") for i in range(4)]
+            b = [bread().rstrip("\r\n") for i in range(4)]
+            if not all(a):
+                assert not all(b), ("files not same length")
+                raise StopIteration
+            if len(a[1]) < min_len or len(b[1]) < min_len: continue
+            yield a, b
 
     trima = open("%s.trim" % fastqs[0], 'w')
     trimb = open("%s.trim" % fastqs[1], 'w')
     print >>sys.stderr, "writing %s and %s" % (trima.name, trimb.name)
 
-    ra, rb = next_record(fha), next_record(fhb)
-    seen = set()
-    for header in fhr_headers:
-        seen.add(header)
-        if header == ra[0][:-2] == rb[0][:-2]:
-            print >>trima, "\n".join(ra)
-            print >>trimb, "\n".join(rb)
-            ra, rb = next_record(fha), next_record(fhb)
-            # can clear the set since we just found a match.
-            seen.clear()
-
-        while ra[0][:-2] in seen:
-            ra = next_record(fha)
-
-        while rb[0][:-2] in seen:
-            rb = next_record(fhb)
+    # no temporary file, just read from stdouts.
+    for ra, rb in gen_pairs(procs[0].stdout, procs[1].stdout):
+        print >>trima, "\n".join(ra)
+        print >>trimb, "\n".join(rb)
 
     returncode = 0
     for p in procs:
