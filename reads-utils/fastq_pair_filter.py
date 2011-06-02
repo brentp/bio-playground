@@ -4,7 +4,6 @@
 
 filter reads from paired fastq so that no unmatching reads remain.
 output files are pair_1.fastq.trim and pair_2.fastq.trim
-
 see: http://hackmap.blogspot.com/2010/09/filtering-paired-end-reads-high.html
 """
 from subprocess import Popen, PIPE
