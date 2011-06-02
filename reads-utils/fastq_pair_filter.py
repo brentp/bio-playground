@@ -21,14 +21,12 @@ def main(adaptors, M, t, l, fastqs, sanger=False):
         trim_cmd = "%s -t %i -l %i" % (FASTQ_QUALITY_TRIMMER, t, l)
         if sanger: trim_cmd += " -Q 33"
 
-        clip_cmds = ["cat %s" % fastq]
+        clip_cmds = []
         for i, a in enumerate(adaptors):
             clip_cmds.append("%s -a %s -M %i %s" \
                  % (FASTX_CLIPPER, a, M, "-Q 33" if sanger else ""))
-        if clip_cmds == []:
-            trim_cmd += " -i %s" % fastq
 
-        cmds.append(" | ".join(clip_cmds + [trim_cmd]))
+        cmds.append(" | ".join(clip_cmds + [trim_cmd]) + " < %s " % fastq)
         print "[running]:", cmds[-1]
     procs = [Popen(cmd, stdout=PIPE, shell=True) for cmd in cmds]
 
