@@ -108,6 +108,15 @@ class IGV(object):
         self.send('snapshotDirectory %s' % snapshot_dir)
         self._path = snapshot_dir
 
+    def expand(self, track):
+        self.send('expand %s' % track)
+
+    def collapse(self, track):
+        self.send('collapse %s' % track)
+
+    def clear(self):
+        self.send('clear')
+
     def send(self, cmd):
         self.commands.append(cmd)
         self._socket.send(cmd + '\n')
