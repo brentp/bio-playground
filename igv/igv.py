@@ -15,25 +15,32 @@ class IGV(object):
         2) you have enabled port communication in
                 View -> Preferences... -> Advanced
 
+    Successful commands return 'OK'
+
     example usage:
 
         >>> igv = IGV()
         >>> igv.genome('hg19')
-        12
+        'OK'
 
         #>>> igv.load('http://www.broadinstitute.org/igvdata/1KG/pilot2Bams/NA12878.SLX.bam')
-        #74
+        'OK'
         >>> igv.go('chr1:45,600-45,800')
-        24
+        'OK'
 
     #save as svg, png, or jpg
         >>> igv.save('/tmp/r/region.svg')
+        'OK'
         >>> igv.save('/tmp/r/region.png')
+        'OK'
 
     # go to a gene name.
         >>> igv.go('muc5b')
-        11
+        'OK'
+        >>> igv.sort()
+        'OK'
         >>> igv.save('muc5b.png')
+        'OK'
 
     # get a list of commands that will work as an IGV batch script.
         >>> print "\n".join(igv.commands)
@@ -44,6 +51,7 @@ class IGV(object):
         snapshot region.svg
         snapshot region.png
         goto muc5b
+        sort base
         snapshot muc5b.png
 
     Note, this example will finish and there will be some delay before the
@@ -58,6 +66,14 @@ class IGV(object):
         self.commands = []
         self.connect()
         self.set_path(snapshot_dir)
+
+    @classmethod
+    def start(cls, jnlp="igv.jnlp", url="http://www.broadinstitute.org/igv/projects/current/"):
+        import subprocess
+        p = subprocess.Popen("/usr/bin/javaws -Xnosplash %s%s" % (url, jnlp),
+                shell=True, stdout=subprocess.PIPE)
+        p.wait()
+        return p.returncode
 
     def connect(self):
         if self._socket: self._socket.close()
@@ -74,6 +90,15 @@ class IGV(object):
     def load(self, url):
         return self.send('load ' + url)
 
+    def sort(self, option='base'):
+        """
+        options is one of: base, position, strand, quality, sample, and
+        readGroup.
+        """
+        assert option in ("base", "position", "strand", "quality", "sample",
+                         "readGroup")
+        return self.send('sort ' + option)
+
 
     def set_path(self, snapshot_dir):
         if snapshot_dir == self._path: return
@@ -85,7 +110,8 @@ class IGV(object):
 
     def send(self, cmd):
         self.commands.append(cmd)
-        return self._socket.send(cmd + '\n')
+        self._socket.send(cmd + '\n')
+        return self._socket.recv(10).rstrip('\n')
 
     def save(self, path=None):
         if path is not None:
@@ -94,9 +120,9 @@ class IGV(object):
             dirname = op.dirname(path)
             if dirname:
                 self.set_path(dirname)
-            self.send('snapshot ' + op.basename(path))
+            return self.send('snapshot ' + op.basename(path))
         else:
-            self.send('snapshot')
+            return self.send('snapshot')
     snapshot = save
 
 if __name__ == "__main__":
