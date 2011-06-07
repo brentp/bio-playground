@@ -54,8 +54,8 @@ class IGV(object):
         sort base
         snapshot muc5b.png
 
-    Note, this example will finish and there will be some delay before the
-    images appear as the BAM file is quite large.
+    Note, there will be some delay as the browser has to load the annotations
+    at each step.
 
     """
     _socket = None
