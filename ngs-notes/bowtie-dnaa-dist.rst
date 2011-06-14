@@ -76,5 +76,11 @@ we can see the insert size distribution:
 
 .. image:: https://github.com/brentp/bio-playground/raw/master/ngs-notes/images/insert-size.png
 
+
+So it is actually centered around 450. So dnaa tools is generating pairs
+with an **inner** distance specified by `-d` not the **outer** distance as
+advertised.
+
+
 .. _`Bao et al`: http://www.nature.com/jhg/journal/vaop/ncurrent/full/jhg201143a.html
 .. _`dnaatools`: http://sourceforge.net/apps/mediawiki/dnaa/index.php?title=Main_Page
