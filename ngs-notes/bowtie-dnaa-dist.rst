@@ -74,7 +74,7 @@ and check it with picard tools::
 we can see the insert size distribution:
 
 
-.. image:: TODO
+.. image:: https://github.com/brentp/bio-playground/raw/master/ngs-notes/images/insert-size.png
 
 .. _`Bao et al`: http://www.nature.com/jhg/journal/vaop/ncurrent/full/jhg201143a.html
 .. _`dnaatools`: http://sourceforge.net/apps/mediawiki/dnaa/index.php?title=Main_Page
