@@ -11,11 +11,49 @@ import sys
 
 FASTX_CLIPPER="fastx_clipper"
 FASTQ_QUALITY_TRIMMER="fastq_quality_trimmer"
+def gen_pairs(fha, fhb, min_len, fastq):
+    def gen_headers(fastq):
+        fq = open(fastq)
+        r = True
+        while r:
+            r = fq.readline().rstrip()[:-2]
+            fq.readline()
+            fq.readline()
+            fq.readline()
+            yield r
+
+    aread, bread = fha.readline, fhb.readline
+    get_a = lambda: [aread().rstrip("\r\n") for i in range(4)]
+    get_b = lambda: [bread().rstrip("\r\n") for i in range(4)]
+
+    ah, bh = None, None
+    header_gen = gen_headers(fastq)
+    for header in header_gen:
+        a = get_a()
+        ah = a[0][:-2]
+        b = get_b()
+        bh = b[0][:-2]
+        if bh != header:
+            while ah != bh:
+                a = get_a()
+                ah = a[0][:-2]
+            while header != bh:
+                header = header_gen.next()
+        if ah != header:
+            while ah != bh:
+                b = get_b()
+                bh = b[0][:-2]
+            while header != bh:
+                header = header_gen.next()
+
+        assert ah == bh
+        if len(a[1]) < min_len or len(b[1]) < min_len: continue
+        yield a, b
 
 def main(adaptors, M, t, min_len, fastqs, sanger=False):
     cmds = []
     for fastq in fastqs:
-        trim_cmd = "%s -t %i" % (FASTQ_QUALITY_TRIMMER, t)
+        trim_cmd = "%s -t %i -l 0" % (FASTQ_QUALITY_TRIMMER, t)
         if sanger: trim_cmd += " -Q 33"
 
         clip_cmds = []
@@ -27,23 +65,14 @@ def main(adaptors, M, t, min_len, fastqs, sanger=False):
         print "[running]:", cmds[-1]
     procs = [Popen(cmd, stdout=PIPE, shell=True) for cmd in cmds]
 
-    def gen_pairs(fha, fhb):
-        aread, bread = fha.readline, fhb.readline
-        while True:
-            a = [aread().rstrip("\r\n") for i in range(4)]
-            b = [bread().rstrip("\r\n") for i in range(4)]
-            if not all(a):
-                assert not all(b), ("files not same length")
-                raise StopIteration
-            if len(a[1]) < min_len or len(b[1]) < min_len: continue
-            yield a, b
 
     trima = open("%s.trim" % fastqs[0], 'w')
     trimb = open("%s.trim" % fastqs[1], 'w')
     print >>sys.stderr, "writing %s and %s" % (trima.name, trimb.name)
 
     # no temporary file, just read from stdouts.
-    for ra, rb in gen_pairs(procs[0].stdout, procs[1].stdout):
+    for ra, rb in gen_pairs(procs[0].stdout, procs[1].stdout, min_len,
+            fastqs[0]):
         print >>trima, "\n".join(ra)
         print >>trimb, "\n".join(rb)
 
@@ -74,6 +103,7 @@ if __name__ == "__main__":
     p.add_option("--sanger", dest="sanger", help="quality scores are ascii 33 sanger encoded (default is 64)", action="store_true")
 
     opts, fastqs = p.parse_args()
+    fastqs[-1] = fastqs[-1].rstrip()
     if not (fastqs and len(fastqs)) == 2:
         sys.exit(p.print_help())
 
