@@ -4,63 +4,90 @@
 
 filter reads from paired fastq so that no unmatching reads remain.
 output files are pair_1.fastq.trim and pair_2.fastq.trim
-
 see: http://hackmap.blogspot.com/2010/09/filtering-paired-end-reads-high.html
 """
+__version__ = "0.1.0"
+
 from subprocess import Popen, PIPE
 import sys
 
 FASTX_CLIPPER="fastx_clipper"
 FASTQ_QUALITY_TRIMMER="fastq_quality_trimmer"
+def gen_pairs(fha, fhb, min_len, fastq):
+    def gen_headers(fastq):
+        fq = open(fastq)
+        r = fq.readline().rstrip("\r\n")
+        while r:
+            fq.readline()
+            fq.readline()
+            fq.readline()
+            yield r[:-2]
+            r = fq.readline().rstrip("\r\n")
+    aread, bread = fha.readline, fhb.readline
+    get_a = lambda: [aread().rstrip("\r\n") for i in range(4)]
+    get_b = lambda: [bread().rstrip("\r\n") for i in range(4)]
 
-def next_record(fh):
-    return [fh.readline().strip() for i in range(4)]
+    ah, bh = None, None
+    header_gen = gen_headers(fastq)
+    for header in header_gen:
+        a = get_a()
+        ah = a[0][:-2]
+        b = get_b()
+        bh = b[0][:-2]
 
-def main(adaptors, M, t, l, fastqs, sanger=False):
+        while not header in (ah, bh):
+            header = header_gen.next()
+
+        if bh != header:
+            while ah != bh and ah:
+                a = get_a()
+                ah = a[0][:-2]
+            while header != bh:
+                header = header_gen.next()
+        if ah != header:
+            while ah != bh and bh:
+                b = get_b()
+                bh = b[0][:-2]
+            while header != bh:
+                header = header_gen.next()
+        if not ah and bh:
+            raise StopIteration
+
+        assert ah == bh
+        if len(a[1]) < min_len or len(b[1]) < min_len: continue
+        yield a, b
+
+def main(adaptors, M, t, min_len, fastqs, sanger=False):
     cmds = []
     for fastq in fastqs:
-        trim_cmd = "%s -t %i -l %i" % (FASTQ_QUALITY_TRIMMER, t, l)
-        if sanger: trim_cmd += " -Q 33"
-
-        clip_cmds = []
+        cmd = []
         for i, a in enumerate(adaptors):
-            if i == 0:
-                clip_cmds.append("%s -a %s -M %i -i %s %s" \
-                     % (FASTX_CLIPPER, a, M, fastq, "-Q 33" if sanger else ""))
+            if M == 0:
+                matches = len(a)
             else:
-                clip_cmds.append("%s -a %s -M %i %s" \
-                     % (FASTX_CLIPPER, a, M, "-Q 33" if sanger else ""))
-        if clip_cmds == []:
-            trim_cmd += " -i %s" % fastq
+                matches = min(M, len(a))
+            cmd.append("%s -a %s -M %i %s -l 0" \
+                 % (FASTX_CLIPPER, a, matches, "-Q 33" if sanger else "")) #, min_len))
 
-        cmds.append(" | ".join(clip_cmds + [trim_cmd]))
+        trim_cmd = "%s -t %i -l 0" % (FASTQ_QUALITY_TRIMMER, t) #, min_len)
+        if sanger: trim_cmd += " -Q 33"
+        cmd.append(trim_cmd)
+        cmd[0] += " < %s" % fastq
+
+        cmds.append(" | ".join(cmd))
         print "[running]:", cmds[-1]
     procs = [Popen(cmd, stdout=PIPE, shell=True) for cmd in cmds]
 
-    # no temporary file, just read from stdouts.
-    fha, fhb = procs[0].stdout, procs[1].stdout
-    fhr = open(fastqs[0])
-    # strip the /2 or /1 and grab only the headers.
-    fhr_headers = (x.strip()[:-2] for i, x in enumerate(fhr) if not (i % 4))
 
     trima = open("%s.trim" % fastqs[0], 'w')
     trimb = open("%s.trim" % fastqs[1], 'w')
     print >>sys.stderr, "writing %s and %s" % (trima.name, trimb.name)
 
-    ra, rb = next_record(fha), next_record(fhb)
-    seen = {}
-    for header in fhr_headers:
-        seen[header] = True
-        if header == ra[0][:-2] == rb[0][:-2]:
-            print >>trima, "\n".join(ra)
-            print >>trimb, "\n".join(rb)
-            ra, rb = next_record(fha), next_record(fhb)
-
-        while ra[0][:-2] in seen:
-            ra = next_record(fha)
-
-        while rb[0][:-2] in seen:
-            rb = next_record(fhb)
+    # no temporary file, just read from stdouts.
+    for ra, rb in gen_pairs(procs[0].stdout, procs[1].stdout, min_len,
+            fastqs[0]):
+        print >>trima, "\n".join(ra)
+        print >>trimb, "\n".join(rb)
 
     returncode = 0
     for p in procs:
@@ -76,8 +103,9 @@ if __name__ == "__main__":
     p.add_option("-a", dest="a", help="adaptor sequence to clip seperate multiples with ','", default="")
 
     p.add_option("-M", dest="M", help="require minimum adapter alignment length of N."
-               " If less than N nucleotides aligned with the adapter - don't clip it",
-                 default=4, type='int')
+               " If less than N nucleotides aligned with the adapter - don't clip it."
+               " default 0 means to require the full length of the adaptor to match. ",
+                 default=0, type='int')
 
     p.add_option("-t", dest="t", help="Quality threshold - nucleotides with lower"
                           " quality will be trimmed (from the end of the sequence ",
@@ -89,6 +117,7 @@ if __name__ == "__main__":
     p.add_option("--sanger", dest="sanger", help="quality scores are ascii 33 sanger encoded (default is 64)", action="store_true")
 
     opts, fastqs = p.parse_args()
+    fastqs[-1] = fastqs[-1].rstrip()
     if not (fastqs and len(fastqs)) == 2:
         sys.exit(p.print_help())
 
