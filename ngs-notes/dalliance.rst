@@ -48,7 +48,7 @@ Getting a bed file from UCSC
   + To get this into bed format copy and paste this onto the command-line::
 
         grep -v '#' knownGene.hg18.stuff.txt | awk '
-                    BEGIN { OFS = "\t"; } ;
+                    BEGIN { OFS = "\t"; FS="\t" } ;
                         {   split($7, astarts, /,/);
                             split($8, aends, /,/);
                             starts=""
@@ -83,7 +83,7 @@ UCSC also has a public mysql server so the process of downloading to a bed can b
     
     mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -D hg18 -P 3306   -e "select chrom,txStart,txEnd,K.name,X.geneSymbol,strand,exonStarts,exonEnds from knownGene as K,kgXref as X where  X.kgId=K.name;" > tmp.notbed
     grep -v txStart tmp.notbed | awk '
-            BEGIN { OFS = "\t"; } ;
+            BEGIN { OFS = "\t"; FS="\t" } ;
                 {   
                     delete astarts;
                     delete aends;
