@@ -1,5 +1,7 @@
 """
-    %prog [options] files
+   awk 'NR % 4 == 0' your.fastq | python %prog [options]
+
+guess the encoding of a stream of qual lines.
 """
 import sys
 import optparse
@@ -23,7 +25,7 @@ def get_qual_range(qual_str):
 
 def get_encodings_in_range(rmin, rmax, ranges=RANGES):
     valid_encodings = []
-    for encoding, (emin, emax) in RANGES.items():
+    for encoding, (emin, emax) in ranges.items():
         if rmin >= emin and rmax <= emax:
             valid_encodings.append(encoding)
     return valid_encodings
@@ -56,13 +58,6 @@ def main():
             sys.exit()
 
     print "\t".join(valid) + "\t" + str((gmin, gmax))
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
