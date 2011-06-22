@@ -44,7 +44,7 @@ def main():
     for i, line in enumerate(sys.stdin):
         lmin, lmax = get_qual_range(line.rstrip())
         if lmin < gmin or lmax > gmax:
-            gmin, gmax = lmin, lmax
+            gmin, gmax = min(lmin, gmin), max(lmax, gmax)
             valid = get_encodings_in_range(gmin, gmax)
             if len(valid) == 0:
                 print >>sys.stderr, "no encodings for range: %s" % str((gmin, gmax))
