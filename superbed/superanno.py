@@ -47,6 +47,40 @@ def simplify_bed(fbed, has_header):
     fh.close()
     return BedTool(fh.name), header
 
+def xstream(a, b, distance, updown, out):
+    """
+    find all things in b that are within
+    distance of a in the given direction
+    (up or down-stream)
+    """
+    direction = dict(u="l", d="r")[updown[0]]
+    kwargs = {'sw':True, direction: distance}
+
+    if "l" in kwargs: kwargs["r"] = 0
+    else: kwargs["l"] = 0
+    a = BedTool(a).saveas()
+
+    c = a.window(b, **kwargs)
+    afields = a.field_count()
+
+    seen = collections.defaultdict(set)
+    for feat in c:
+        key = "\t".join(feat[:afields])
+        # keep track of all the feature names that overlap this one
+        seen[key].update((feat[afields + 3],))
+
+    # the entries that did appear in the window
+    for row in seen:
+        out.write(row + "\t" + ",".join(sorted(seen[row])) + "\n")
+
+    # write the entries that did not appear in the window'ed Bed
+    for row in a:
+        key = "\t".join(row[:afields])
+        if key in seen: continue
+        out.write(str(row) + "\t.\n")
+    out.flush()
+    assert len(BedTool(out.name)) == len(a)
+
 def overlapping(a, b):
     by_name = collections.defaultdict(list)
     for row in a.intersect(b, wo=True).cut(range(6) + [9, 10]):
@@ -54,7 +88,6 @@ def overlapping(a, b):
     fh = open(BedTool._tmp(), "w")
     for name, rows in by_name.iteritems():
         types = sorted(set([r[7] for r in rows]))
-        # TODO: associate the name with the feature-type.
         full_names = sorted(set([r[6] for r in rows]))
         #regain the original line.
         line = name.split("Z_Z") + [";".join(full_names), ";".join(types)]
@@ -78,7 +111,7 @@ def nearest(a, b):
         full_names = [r[9] for r in rows]
 
         dists = [get_dist(r) for r in rows]
-        if len(set(dists)) == 1: 
+        if len(set(dists)) == 1:
             dists = set(dists)
             full_names = set(full_names)
         dists = ";".join(map(str, dists))
@@ -104,8 +137,7 @@ def get_dist(row):
         1/0
     return dist
 
-def superanno(abed, bbed, has_header):
-    out = sys.stdout
+def superanno(abed, bbed, has_header, out=sys.stdout):
     a, header = simplify_bed(abed, has_header)
     over = overlapping(a, bbed)
     near = nearest(a, bbed)
@@ -116,6 +148,13 @@ def superanno(abed, bbed, has_header):
     for line in open(near):
         out.write(line)
 
+def remove_transcripts(b):
+    bnew = open(BedTool._tmp(), "w")
+    for row in reader(b, header=False):
+        row[3] = row[3].split(",")[1]
+        bnew.write("\t".join(row) + "\n")
+    bnew.close()
+    return bnew.name
 
 def main():
     p = optparse.OptionParser(__doc__)
@@ -126,12 +165,46 @@ def main():
     p.add_option("--header", dest="header", help="a file has a header",
                     action="store_true", default=False)
 
+    p.add_option("--upstream", dest="upstream", type=int, default=None,
+                   help="distance upstream of [a] to look for [b]")
+    p.add_option("--downstream", dest="downstream", type=int, default=None,
+                   help="distance downstream of [a] to look for [b]")
+    p.add_option("--transcripts", dest="transcripts", action="store_true",
+            default=False, help="use transcript names in output as well as"
+            " gene name. default is just gene name")
+
     opts, args = p.parse_args()
     if (opts.a is None or opts.b is None):
         sys.exit(not p.print_help())
 
-    superanno(opts.a, opts.b, opts.header)
+    b = opts.b
+    if not opts.transcripts:
+        b = remove_transcripts(b)
 
+    if not (opts.upstream or opts.downstream):
+        superanno(opts.a, b, opts.header, sys.stdout)
+
+    else:
+        out = open(BedTool._tmp(), "w")
+        superanno(opts.a, b, opts.header, out)
+        out.close()
+
+        new_header = []
+        out_fh = open(out.name)
+        new_header = [out_fh.readline().rstrip("\r\n")] if opts.header else []
+        for xdir in ("upstream", "downstream"):
+            dist = getattr(opts, xdir)
+            if dist is None: continue
+            new_out = open(BedTool._tmp(), "w")
+            xstream(out_fh, b, dist, xdir, new_out)
+            new_header.append("%s_%i" % (xdir, dist))
+            new_out.close()
+            out_fh = open(new_out.name)
+
+        if opts.header:
+            print "\t".join(new_header)
+        for line in open(out_fh.name):
+            sys.stdout.write(line)
 
 if __name__ == "__main__":
     import doctest
