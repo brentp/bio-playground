@@ -151,7 +151,8 @@ def superanno(abed, bbed, has_header, out=sys.stdout):
 def remove_transcripts(b):
     bnew = open(BedTool._tmp(), "w")
     for row in reader(b, header=False):
-        row[3] = row[3].split(",")[1]
+        if "," in row[3]:
+            row[3] = row[3].split(",")[1]
         bnew.write("\t".join(row) + "\n")
     bnew.close()
     return bnew.name
