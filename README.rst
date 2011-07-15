@@ -1,6 +1,7 @@
 .. contents::
 
 Miscellaneous scripts for bioinformatics that dont merit their own repo.
+All under MIT License unless otherwise specified.
 
 Ks Calc
 --------
