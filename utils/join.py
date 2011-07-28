@@ -33,8 +33,9 @@ def join(fa, colsa, fb, colsb, sepa, sepb, remove):
     for line in open(fa):
         if line[0] == "#":
             bstuff = bdict.get('header', '').split(sepb)
-            for colb in sorted(colsb, reverse=True):
-                del bstuff[colb]
+            if remove:
+                for colb in sorted(colsb, reverse=True):
+                    del bstuff[colb]
             print line.rstrip("\r\n") + sepa + sepa.join(bstuff)
             continue
 
