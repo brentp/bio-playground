@@ -21,8 +21,12 @@ the file output.from.ucsc can be extracted via mysql::
                 FROM knownGene as K,kgXref as X WHERE  X.kgId=K.name" \
                     > output.from.ucsc
 
+where $ORG is something like hg19 or mm8. The header must be present for this
+to work.
 
-where $ORG is something like hg19 or mm8. The header must be present for this to work.
+for refGene, this can be something like:
+    SELECT chrom,txStart,txEnd,cdsStart,cdsEnd,name2 as
+            name,strand,exonStarts,exonEnds FROM refGene
 """
 from __future__ import print_function
 import sys
@@ -116,7 +120,7 @@ def superbed(ucsc_file):
         d['exonStarts'] =  map(int, d['exonStarts'][:-1].split(","))
         d['exonEnds'] =  map(int, d['exonEnds'][:-1].split(","))
         assert len(d['exonStarts']) == len(d['exonEnds'])
-        d['full_name'] = ",".join((d['name'], d['geneSymbol']))
+        d['full_name'] = (",".join((d['name'], d.get('geneSymbol', '')))).rstrip(",")
         print_features(d)
 
 
