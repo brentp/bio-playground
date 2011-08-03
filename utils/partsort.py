@@ -1,3 +1,4 @@
+#!/bin/env python
 """
    partial sort of a file. Useful when some columns are known to be sorted, but
    within a group defined by those column, some other columns are out of order.
