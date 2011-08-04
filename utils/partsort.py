@@ -15,7 +15,7 @@
 """
 import argparse
 from toolshed import reader, header as get_header
-from itertools import groupby
+from itertools import groupby, chain
 from operator import itemgetter
 import sys
 
@@ -25,7 +25,8 @@ def partsort(afile, group_cols, sort_cols, sort_convertors, header=False):
     then after the sort, these are removed.
     this removes problems with floating point reprs.
     """
-    row_len = len(get_header(afile))
+    the_first_line = get_header(afile)
+    row_len = len(the_first_line)
     n_extra = len(sort_convertors)
 
     # maintain order of the sort cols, but use the appended columns for the
@@ -43,9 +44,12 @@ def partsort(afile, group_cols, sort_cols, sort_convertors, header=False):
             actual_sort_cols.append(idx)
             n_extra += 1
 
+    # if it was stdin, then we read one line to get the header length.
+    lines = reader(afile, header=header) if afile != "-" \
+            else chain([the_first_line], reader(afile, header))
     # groupby the correct columns
-    for keyed, group in groupby(reader(afile, header=header), lambda toks:
-            [toks[i] for i in group_cols]):
+    for keyed, group in groupby(lines, lambda toks:
+                                        [toks[i] for i in group_cols]):
 
         # then generate the rows with the converted columns appended.
         def gen_converted_group():
@@ -55,8 +59,10 @@ def partsort(afile, group_cols, sort_cols, sort_convertors, header=False):
 
         # then iterator over the sorted cols.
         for toks in sorted(gen_converted_group(), key=itemgetter(*actual_sort_cols)):
+            i += 1
             # strip the extra columns.
             yield toks[:row_len]
+    print >>sys.stderr, i, "lines"
 
 def read_sort_spec(spec):
     toks = [x.strip() for x in spec.split(",")]
@@ -87,9 +93,11 @@ def main():
     sort_cols, sort_convertors = read_sort_spec(args.s)
     # group_convertors not used.
 
+    j = 0
     for toks in partsort(args.file, group_cols, sort_cols, sort_convertors, header=False):
+        j += 1
         print "\t".join(toks)
-
+    print >>sys.stderr, j, "lines"
 if __name__ == "__main__":
     import doctest
     if doctest.testmod(optionflags=doctest.ELLIPSIS |\
