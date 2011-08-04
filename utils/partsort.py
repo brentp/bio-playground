@@ -59,10 +59,8 @@ def partsort(afile, group_cols, sort_cols, sort_convertors, header=False):
 
         # then iterator over the sorted cols.
         for toks in sorted(gen_converted_group(), key=itemgetter(*actual_sort_cols)):
-            i += 1
             # strip the extra columns.
             yield toks[:row_len]
-    print >>sys.stderr, i, "lines"
 
 def read_sort_spec(spec):
     toks = [x.strip() for x in spec.split(",")]
@@ -93,11 +91,8 @@ def main():
     sort_cols, sort_convertors = read_sort_spec(args.s)
     # group_convertors not used.
 
-    j = 0
     for toks in partsort(args.file, group_cols, sort_cols, sort_convertors, header=False):
-        j += 1
         print "\t".join(toks)
-    print >>sys.stderr, j, "lines"
 if __name__ == "__main__":
     import doctest
     if doctest.testmod(optionflags=doctest.ELLIPSIS |\
