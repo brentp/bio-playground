@@ -92,20 +92,25 @@ if __name__ == "__main__":
             default="180:220:300")
     p.add_argument("--temp-range", dest="temp_range", help="range of "
             "temperatures sizes. format is min:optimal:max   e.g.  %(default)s",
-            default="52:60:72")
+            default="52:60:74")
 
     p.add_argument("fasta", help="fasta containing regions")
 
     args = p.parse_args()
     pmin, popt, pmax = map(int, args.primer_size.split(":"))
     prod_min, prod_opt, prod_max = map(int, args.product_size.split(":"))
-    tmin, topt, tmax = map(int, args.temp_range.split(":"))
+    tmin, topt, _tmax = map(int, args.temp_range.split(":"))
 
     print  "\t".join(COLUMNS)
     for header, seq in fasta_iter(args.fasta):
         if header.endswith("/2"): continue
+        seen = {}
+        tmax = min(_tmax, len(seq))
         for lrp in main(post_data % locals()):
             line = [header]
             left, right, product = lrp
             line.extend(product + left[1:] + right[1:])
-            print "\t".join(line)
+            s = "\t".join(line)
+            if s in seen: continue
+            seen[s] = True
+            print s
