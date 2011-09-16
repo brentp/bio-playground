@@ -68,8 +68,12 @@ def ma_setup(moving_average):
 def gen_print_read(prefix, min_len):
     prefix, ext = os.path.splitext(prefix)
 
+
     # if the sent in prefix ends with .gz, we output gzip
     is_fastq = prefix.endswith((".fastq", ".fq")) or ext in (".fastq", ".fq")
+    if not ext.lower() in (".gz", ".z"):
+        prefix += ext
+        ext = ""
 
     prefix = prefix.rstrip('_')
     if is_fastq:
@@ -77,9 +81,12 @@ def gen_print_read(prefix, min_len):
 
         def print_read(header, cseq, quals):
             if header[0] == "#":
-                print >> out_fq, header,
+                #print >> out_fq, header,
                 return
             if len(cseq) < min_len: return
+            # Mosaik doesn't like it when seq longer than quals.
+            if len(cseq) > len(quals):
+                quals.append(min(quals[-3:]))
             print >>out_fq, "%s\n%s\n+\n%s" % (
                     "@" + header[1:].rstrip("\r\n").replace("_F3", "/1"),
                     cseq,
@@ -178,7 +185,8 @@ def main():
                 cs = cs.rstrip(" \r\n")
                 quals = map(int, ql.split(' '))
 
-                assert len(quals) in (len(cs) - 1, len(cs)), (len(quals), len(cs))
+                len_cs = len(cs)
+                assert len(quals) in (len_cs - 1, len_cs), (len(quals), len_cs)
 
                 for i, q in enumerate(quals[::-1]):
                     if q > args.minq: break
@@ -196,7 +204,6 @@ def main():
                     if len(cs) == 1: stats['reads_chopped'] += 1
                 elif moving_average is not None and len(cs) > 1:
                     cs, quals = conv_fun(cs, quals)
-
             if not is_fastq:
                 print_read(last_header, cs, quals)
             else:
