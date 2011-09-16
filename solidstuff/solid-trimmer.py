@@ -178,7 +178,7 @@ def main():
                 cs = cs.rstrip(" \r\n")
                 quals = map(int, ql.split(' '))
 
-                assert len(quals) == len(cs) - 1, (len(quals), len(cs))
+                assert len(quals) in (len(cs) - 1, len(cs)), (len(quals), len(cs))
 
                 for i, q in enumerate(quals[::-1]):
                     if q > args.minq: break
