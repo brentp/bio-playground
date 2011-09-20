@@ -91,7 +91,7 @@ def gen_print_read(prefix, min_len):
                     "@" + header[1:].rstrip("\r\n").replace("_F3", "/1"),
                     cseq,
                     # between 33 and 64.
-                    "".join(chr(q + 33) if q > 0 else ('!' if q < 31 else '?') for q in quals)
+                    "".join("!" if q < 0 else "?" if q > 31 else chr(q + 33) for q in quals)
             )
 
     else:
