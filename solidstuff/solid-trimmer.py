@@ -115,6 +115,15 @@ def gen_print_read(prefix, min_len):
 
     return print_read, is_fastq
 
+def qntrim(cs, quals, qn):
+    """
+    require N bases at or above Q otherwise filter
+    """
+    qlimit, nlimit = qn
+    qq = sum(1 for q in quals if q >= qlimit)
+    if qq < qlimit:
+        return EMPTY
+    return cs, quals
 
 def main():
     p = argparse.ArgumentParser(description=__doc__,
@@ -146,18 +155,15 @@ def main():
             help="creating a moving average of window-size `window` on the "
             "quals chop as soon as the mov. avg. drops below `min` specified "
             " as: window:min e.g.: 7:12. The window must be odd")
-
-    trimming.add_argument("--q-trim", dest="qtrim", help="BWA's -q parameter "
-        "for quality trimming default: %(default)i means no trimming",
-            type=int, default=-1)
-
+    trimming.add_argument("--QN", dest="QN", help="chop reads with fewer"
+        " than N bases with quality above Q. Specified as Q,N, e.g. 20,32 to"
+        " require at least 32 bases >= phred 20 as in Ajay et. al GR paper")
 
     filtering = p.add_argument_group('filtering',
             'By default no filtering is done')
     filtering.add_argument("--min-read-length", dest="min_len", help="reads shorter"
             " than this after trimming are not printed. default: %(default)i",
              type=int , default=0)
-
 
     args = p.parse_args()
     if not (args.prefix and args.c and args.q):
@@ -166,6 +172,8 @@ def main():
     moving_average = args.ma
     if moving_average is not None:
         conv_fun = ma_setup(moving_average)
+
+    qn = map(int, args.qn.split(",")) if args.qn else None
 
     print_read, is_fastq = gen_print_read(args.prefix, args.min_len)
     last_header = None
@@ -202,11 +210,10 @@ def main():
                     cs, quals = EMPTY
                 stats['bases_skipped'] += i
 
+                if qn is not None:
+                    cs, quals = qntrim(cs, quals, qn)
 
-                if args.qtrim > 0 and len(cs) > 1:
-                    cs, quals = qtrim(cs, quals, args.qtrim)
-                    if len(cs) == 1: stats['reads_chopped'] += 1
-                elif moving_average is not None and len(cs) > 1:
+                if moving_average is not None and len(cs) > 1:
                     cs, quals = conv_fun(cs, quals)
             if not is_fastq:
                 print_read(last_header, cs, quals)
@@ -226,29 +233,6 @@ EMPTY = "..", [2]
 def double_encode(cseq, _complement=string.maketrans('0123.', 'ACGTN')):
     # copied from BWA which takes substr(seq, 2, end)
     return cseq[2:].translate(_complement)
-
-def qtrim(seq, quals, q_param=8):
-    """
-    the -q option from BWA: quality threshold for read trimming
-
-    >>> qtrim("ACTGCG", [10, 9, 8, 9, 9, 10], q_param=8)
-    ('ACTGCG', [10, 9, 8, 9, 9, 10])
-
-    """
-    max_pos = pos = len(seq)
-    max_area = area = 0
-    for qual in quals[::-1]:
-        area += q_param - qual
-        if area > max_area:
-            max_area = area
-            max_pos = pos
-        pos -= 1
-        if area < 0:
-            break
-    if pos == 0:
-        return EMPTY
-    else:
-        return seq[:max_pos], quals[:max_pos]
 
 if __name__ == "__main__":
     import doctest
