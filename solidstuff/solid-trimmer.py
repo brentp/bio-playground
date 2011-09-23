@@ -59,6 +59,8 @@ def ma_setup(moving_average):
         below = np.where(ma_qual < ma_min)[0]
         if len(below) == 0: return cseq, quals
         first_below = below[0]
+        while ma_qual[first_below + 1] > ma_qual[below[0]]:
+            first_below += 1
         if first_below < 2:
             return EMPTY
         return  cseq[:first_below], quals[:first_below]
@@ -70,7 +72,8 @@ def gen_print_read(prefix, min_len):
 
 
     # if the sent in prefix ends with .gz, we output gzip
-    is_fastq = prefix.endswith((".fastq", ".fq")) or ext in (".fastq", ".fq")
+    is_fastq = prefix.endswith((".fastq", ".fq")) or ext in (".fastq", ".fq") \
+               or prefix == "-"
     if not ext.lower() in (".gz", ".z"):
         prefix += ext
         ext = ""
@@ -121,10 +124,10 @@ def main():
     inputs.add_argument("-q", dest="q", help="qual file", type=str)
 
 
-    inputs.add_argument("-p", dest="prefix", help="prefix of the output files"
+    inputs.add_argument("-p", "--prefix", dest="prefix", help="prefix of the output files"
             """ (does not include the '_F3'. if this endswith .fastq[.gz] .fq[.gz]
             the output is a single fastq file rather than new .csfasta, qual
-            files""")
+            files. default is fastq to stdout.""", default="-")
     inputs.add_argument("--encode", action="store_true", default=False,
             help="output doubly encoded FASTQ sequences e.g. for use in BWA"
             "default is False, for use in Mosaik, BFAST")
