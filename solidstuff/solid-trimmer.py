@@ -173,7 +173,7 @@ def main():
     if moving_average is not None:
         conv_fun = ma_setup(moving_average)
 
-    qn = map(int, args.qn.split(",")) if args.qn else None
+    qn = map(int, args.QN.split(",")) if args.QN else None
 
     print_read, is_fastq = gen_print_read(args.prefix, args.min_len)
     last_header = None
