@@ -58,8 +58,9 @@ def ma_setup(moving_average):
         ma_qual = np.convolve(quals, kern, mode="same")
         below = np.where(ma_qual < ma_min)[0]
         if len(below) == 0: return cseq, quals
+        N = len(quals) - 1
         first_below = below[0]
-        while ma_qual[first_below + 1] > ma_qual[below[0]]:
+        while first_below < N and ma_qual[first_below + 1] > ma_qual[below[0]]:
             first_below += 1
         if first_below < 2:
             return EMPTY
