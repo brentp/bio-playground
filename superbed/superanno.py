@@ -5,33 +5,7 @@ import optparse
 import sys
 from pybedtools import BedTool
 import collections
-
-
-def nopen(f, mode="rb"):
-    return {"r": sys.stdin, "w": sys.stdout}[mode[0]] if f == "-" \
-         else open(f, mode)
-
-
-def reader(fname, header=True, sep="\t"):
-    r"""
-    for each row in the file `fname` generate dicts if `header` is True
-    or lists if `header` is False. The dict keys are drawn from the first
-    line. If `header` is a list of names, those will be used as the dict
-    keys.
-    """
-    fh = nopen(fname)
-    line_gen = (l.rstrip("\r\n").split(sep) for l in fh)
-    if header == True:
-        header = line_gen.next()
-        header[0] = header[0].lstrip("#")
-
-    if header:
-        for toks in line_gen:
-            d = dict(zip(header, toks))
-            yield d
-    else:
-        for toks in line_gen:
-            yield toks
+from toolshed import reader
 
 def simplify_bed(fbed, has_header):
     """
