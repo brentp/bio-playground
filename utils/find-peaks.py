@@ -85,7 +85,7 @@ def find_region(aiter, skip, seed, threshold, col_getter, report_cutoff):
             # nothing, it's not a large value
             pass
 
-    if current_region:
+    if current_region and seeded:
         yield get_and_clear_region(current_region, col_getter, report_cutoff)
 
 
