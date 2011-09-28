@@ -34,6 +34,7 @@ def xstream(a, b, distance, updown, out):
     else: kwargs["l"] = 0
     a = BedTool(a).saveas()
 
+    kwargs['stream'] = True
     c = a.window(b, **kwargs)
     afields = a.field_count()
 
@@ -59,11 +60,14 @@ def overlapping(a, b):
     by_name = collections.defaultdict(list)
     for row in a.intersect(b, wo=True, stream=True).cut(range(6) + [9, 10],
             stream=True):
-        by_name[row[3]].append((row))
+        key = row[3] # the ZZ joined string.
+        # 6, 7 are name, type.
+        by_name[key].append((row[6], row[7]))
+
     fh = open(BedTool._tmp(), "w")
     for name, rows in by_name.iteritems():
-        types = sorted(set([r[7] for r in rows]))
-        full_names = sorted(set([r[6] for r in rows]))
+        types = sorted(set([r[1] for r in rows]))
+        full_names = sorted(set([r[0] for r in rows]))
         #regain the original line.
         line = name.split("Z_Z") + [";".join(full_names), ";".join(types)]
         fh.write("\t".join(line) + "\n")
@@ -72,11 +76,16 @@ def overlapping(a, b):
 
 def nearest(a, b):
     a_not_overlapping = a.intersect(b, v=True)
-    ab = a_not_overlapping.closest(b, t="all")
+    if len(a_not_overlapping) != 0:
+        ab = a_not_overlapping.closest(b, t="all", stream=True)
+    else:
+        ab = []
 
     by_name = collections.defaultdict(list)
     for row in ab:
-        by_name[str(row[3])].append(row)
+        key = row[3]
+        row[3] = "."
+        by_name[key].append(row)
 
     fh = open(BedTool._tmp(), "w")
     seen = set()
