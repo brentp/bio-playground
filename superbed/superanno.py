@@ -57,7 +57,8 @@ def xstream(a, b, distance, updown, out):
 
 def overlapping(a, b):
     by_name = collections.defaultdict(list)
-    for row in a.intersect(b, wo=True).cut(range(6) + [9, 10]):
+    for row in a.intersect(b, wo=True, stream=True).cut(range(6) + [9, 10],
+            stream=True):
         by_name[row[3]].append((row))
     fh = open(BedTool._tmp(), "w")
     for name, rows in by_name.iteritems():
