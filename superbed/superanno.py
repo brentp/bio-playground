@@ -2,6 +2,8 @@
     %prog [options] files
 """
 import optparse
+import os.path as op
+import os
 import sys
 from pybedtools import BedTool
 import collections
@@ -122,7 +124,13 @@ def get_dist(row):
         1/0
     return dist
 
-def superanno(abed, bbed, has_header, out=sys.stdout):
+def superanno(abed, bbed, has_header, no_near, out=sys.stdout):
+    if no_near:
+        if out == sys.stdout: return
+        for line in open(abed):
+            out.write(line)
+        return
+
     a, header = simplify_bed(abed, has_header)
     over = overlapping(a, bbed)
     near = nearest(a, bbed)
@@ -134,7 +142,13 @@ def superanno(abed, bbed, has_header, out=sys.stdout):
         out.write(line)
 
 def remove_transcripts(b):
-    bnew = open(BedTool._tmp(), "w")
+    if op.exists(b + ".notranscripts"):
+        if os.stat(b + ".notranscripts").st_mtime > os.stat(b).st_mtime:
+            return b + ".notranscripts"
+    try:
+        bnew = open(b + ".notranscripts", 'w')
+    except:
+        bnew = open(BedTool._tmp(), "w")
     for row in reader(b, header=False):
         if "," in row[3]:
             row[3] = row[3].split(",")[1]
@@ -149,6 +163,9 @@ def main():
     p.add_option("-b", dest="b", help="superbed to annotate with")
 
     p.add_option("--header", dest="header", help="a file has a header",
+                    action="store_true", default=False)
+    p.add_option("-N","--no-near", dest="no_near",
+            help="dont find the nearest gene, just the up/downstream",
                     action="store_true", default=False)
 
     p.add_option("--upstream", dest="upstream", type=int, default=None,
@@ -168,11 +185,11 @@ def main():
         b = remove_transcripts(b)
 
     if not (opts.upstream or opts.downstream):
-        superanno(opts.a, b, opts.header, sys.stdout)
+        superanno(opts.a, b, opts.header, opts.no_near, sys.stdout)
 
     else:
         out = open(BedTool._tmp(), "w")
-        superanno(opts.a, b, opts.header, out)
+        superanno(opts.a, b, opts.header, opts.no_near, out)
         out.close()
 
         new_header = []
