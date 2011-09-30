@@ -41,7 +41,7 @@ def gen_regions(fh, skip, seed, threshold, group, keep_cols, report_cutoff):
         keep_cols.append(2)
         col_getter = itemgetter(*keep_cols)
     else:
-        keep_cols = None
+        keep_cols, col_getter = None, None
     for key, grouped in groupby(fhiter, itemgetter(0)):
         for region in find_region(grouped, skip, seed, threshold, col_getter,
                 report_cutoff):
@@ -108,7 +108,7 @@ def main():
                  " large in order to seed a region. [default: %default]",
                  type=float, default=5.0)
     p.add_argument("--keep-cols", dest="keep", help="comma separated list of"
-            "columns to add to the output data")
+            "columns to add to the output data", default="")
 
     p.add_argument("--threshold", dest="threshold", help="After seeding, a value"
                  "of at least this number can extend a region [default: "
@@ -118,7 +118,7 @@ def main():
     args = p.parse_args()
 
     f = reader(args.regions, header=False, sep="\t")
-    keep = map(int, args.keep.strip().split(","))
+    keep = [int(k) for k in args.keep.strip().split(",") if k]
     report_cutoff = args.seed
     for key, region in gen_regions(f, args.skip, args.seed, args.threshold,
             args.group, keep, report_cutoff):
