@@ -16,10 +16,8 @@ def simplify_bed(fbed, has_header):
     header = line_gen.next() if has_header else None
     fh = open(BedTool._tmp(), "w")
     for toks in line_gen:
-        new_toks = toks[:3] + ["Z_Z".join(toks), "."]
-        # strand...
-        if len(toks) > 5 and toks[5] in "+=":
-            new_toks.append(toks[5])
+        new_toks = toks[:3] + ["Z_Z".join(toks), ".",
+                                toks[5] if len(toks) > 5 else "."]
         fh.write("\t".join(new_toks) + "\n")
     fh.close()
     return BedTool(fh.name), header
