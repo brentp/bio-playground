@@ -149,11 +149,15 @@ def remove_transcripts(b):
         bnew = open(b + ".notranscripts", 'w')
     except:
         bnew = open(BedTool._tmp(), "w")
-    for row in reader(b, header=False):
-        if "," in row[3]:
-            row[3] = row[3].split(",")[1]
-        bnew.write("\t".join(row) + "\n")
-    bnew.close()
+    try:
+        for row in reader(b, header=False):
+            if "," in row[3]:
+                row[3] = row[3].split(",")[1]
+            bnew.write("\t".join(row) + "\n")
+        bnew.close()
+    except:
+        os.unlink(bnew.name)
+        raise
     return bnew.name
 
 def main():
