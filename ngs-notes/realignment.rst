@@ -6,16 +6,16 @@ Problem Alignments
     The following shows the alignments of 6 reads by a typical read mapper in
     the presence of a 4bp homozygous INDEL:
 
-         coor     12345678901234    5678901234567890123456 
+         coor     12345678901234    5678901234567890123456
          ref      aggttttataaaac----aattaagtctacagagcaacta
-         sample   aggttttataaaacAAATaattaagtctacagagcaacta 
+         sample   aggttttataaaacAAATaattaagtctacagagcaacta
          read1    aggttttataaaac****aaAtaa
          read2     ggttttataaaac****aaAtaaTt
          read3         ttataaaacAAATaattaagtctaca
          read4             CaaaT****aattaagtctacagagcaac
          read5               aaT****aattaagtctacagagcaact
          read6                 T****aattaagtctacagagcaacta
-        
+
      where capital bases represent differences from the reference and underlined
      bases are the inserted bases. The alignments except for read3 are wrong
      because the 4bp insertion is misplaced. The mapper produces such alignments
@@ -31,7 +31,7 @@ from SRMA paper::
     heterozygous positions.
 
 Relations explained by Nils Homer: http://seqanswers.com/forums/showpost.php?p=34937&postcount=2::
-    
+
     Samtools does re-alignment (BAQ) via the forward-backward algorithm using the a
     single read and the reference. SRMA/Dindel/etc use all reads across a given loci.
     The former really helps identify parts of the alignment that are ambiguous (it could
@@ -98,7 +98,7 @@ This allows down-stream tools to do indel calling without looking at the
 reference.
 
 
-Also, similar procedure in GATK called Base Quality Recalibration: http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Support_Protocol_1:_Base_Quality_Recalibration 
+Also, similar procedure in GATK called Base Quality Recalibration: http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Support_Protocol_1:_Base_Quality_Recalibration
 
 and see: http://www.broadinstitute.org/gsa/wiki/index.php/Base_quality_score_recalibration#Introduction
 

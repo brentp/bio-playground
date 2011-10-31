@@ -45,17 +45,17 @@ static int rcmp(double x, double y)
 static void rPsort2(double *x, int lo, int hi, int k)
 {
     double v, w;
-    int L, R, i, j;                     
-                                
-    for (L = lo, R = hi; L < R; ) {             
-        v = x[k];                       
-        for(i = L, j = R; i <= j;) {                
-            while (rcmp(x[i], v) < 0) i++;          
-            while (rcmp(v, x[j]) < 0) j--;          
+    int L, R, i, j;
+
+    for (L = lo, R = hi; L < R; ) {
+        v = x[k];
+        for(i = L, j = R; i <= j;) {
+            while (rcmp(x[i], v) < 0) i++;
+            while (rcmp(v, x[j]) < 0) j--;
             if (i <= j) { w = x[i]; x[i++] = x[j]; x[j--] = w; }
-        }                           
-        if (j < k) L = i;                   
-        if (k < i) R = j;                 
+        }
+        if (j < k) L = i;
+        if (k < i) R = j;
     }
 
 }

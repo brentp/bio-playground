@@ -96,7 +96,7 @@ Annotation
 
     + `bedtools`_ (Command-line)
 
-        * download whatever data you want. get it it bed/gff format and 
+        * download whatever data you want. get it it bed/gff format and
           use linux commands like cut to get desired columns.
 
 Suggested Short-Term Pipeline

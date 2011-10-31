@@ -57,7 +57,7 @@ typedef struct fastq_record {
 } fastq_record;
 
 inline void write_fastq_record(fastq_record fq){
-    printf("%s\n%s\n%s\n%s\n", 
+    printf("%s\n%s\n%s\n%s\n",
                     fq.header.c_str(),
                     fq.seq.c_str(),
                     fq.oheader.c_str(),
@@ -99,9 +99,9 @@ void add_quality(fastq_record *qr, int adjust, int filter_limit, int *masked){
             *masked += 1;
         }
     }
-    qr->average_quality = accumulate(qr->iquality.begin(), 
+    qr->average_quality = accumulate(qr->iquality.begin(),
                                      qr->iquality.end(), 0) / (float)l;
-    
+
 }
 
 string int2string(int number) {
@@ -120,8 +120,8 @@ int fsummarize_quality(opts o){
     int_int_map imap;
     struct fastq_record qr;
     ifstream fh (o.filename.c_str(), ios::in);
-    if (!fh.is_open()){ 
-        fprintf(stderr, "does '%s' exist? not able to open\n", 
+    if (!fh.is_open()){
+        fprintf(stderr, "does '%s' exist? not able to open\n",
                 o.filename.c_str());
         return 1;
     }
@@ -139,7 +139,7 @@ int fsummarize_quality(opts o){
         L = qr.iquality.size();
         for(i=0; i < L; ++i){
             // so here we have a lookup of read position -> quality_score -> count.
-            quality_map[i][qr.iquality[i]]++; 
+            quality_map[i][qr.iquality[i]]++;
         }
         ++nreads;
 
@@ -167,7 +167,7 @@ int fsummarize_quality(opts o){
 
         string stats = "";
         for(stat_it=stat_pts.begin(); stat_it != stat_pts.end(); stat_it++){
-            stats += int2string(counts[nreads * (*stat_it)]) + "\t"; 
+            stats += int2string(counts[nreads * (*stat_it)]) + "\t";
         }
 
         printf("%i\t%s%.5f\n", i + 1, stats.c_str(), (float)qsum_quality / nreads);
@@ -179,8 +179,8 @@ int fsummarize_codon(opts o){
     bp_char_freq_map cm;
     struct fastq_record qr;
     ifstream fh (o.filename.c_str(), ios::in);
-    if (!fh.is_open()){ 
-        fprintf(stderr, "does '%s' exist? not able to open\n", 
+    if (!fh.is_open()){
+        fprintf(stderr, "does '%s' exist? not able to open\n",
                 o.filename.c_str());
         return 1;
     }
@@ -238,15 +238,15 @@ int write_filtered(record_map &rm, opts &o){
         // only write the one with best avg_q
         if(o.filter_unique){
             // sort by average_quality.
-            sort(rl.rbegin(), rl.rend());            
+            sort(rl.rbegin(), rl.rend());
             write_fastq_record(rl[0]);
-        }            
+        }
         else {
             for(i=0; i < rl.size(); i++){
                 write_fastq_record(rl[i]);
             }
         }
-    } 
+    }
 }
 
 
@@ -257,7 +257,7 @@ int filter(opts o){
     int i = 0;
     int quality_skipped = 0;
     ifstream fh (o.filename.c_str(), ios::in);
-    if (!fh.is_open()){ 
+    if (!fh.is_open()){
         cout << "does '" << o.filename << "' exist? not able to open" << endl;
         return 1;
     }
@@ -276,7 +276,7 @@ int filter(opts o){
             ns_skipped += 1;
             continue;
         }
-        
+
         pos = rm.find(qr.seq);
         if (pos == rm.end()){
             // create a new vector.
@@ -289,10 +289,10 @@ int filter(opts o){
             rm[qr.seq].push_back(qr);
         }
     }
-    fprintf(stderr, "masked %i basepairs because of quality's\n", 
+    fprintf(stderr, "masked %i basepairs because of quality's\n",
             quality_skipped);
     float ratio = (float)ns_skipped/i * 100.0;
-    fprintf(stderr, "skipped %i reads because of N's(%.3f %%)\n", 
+    fprintf(stderr, "skipped %i reads because of N's(%.3f %%)\n",
             ns_skipped, ratio);
 
     ratio = (float)rm.size()/i * 100.0;
@@ -313,7 +313,7 @@ int parse_args(int argc, char *argv[], opts *o){
     o->adjust = DEFAULT;
     o->action = (string)argv[1];
     o->filename = (string)argv[argc - 1];
-    
+
     if(o->action == "summarize"){
         for(i=2; i < argc - 1;){
             if(string(argv[i]) == "--codon"){
@@ -329,7 +329,7 @@ int parse_args(int argc, char *argv[], opts *o){
             else {
                 fprintf(stderr, "bad argument: %s\n", argv[i]);
             }
-            i++; 
+            i++;
         }
     }
     //bool filter_unique;

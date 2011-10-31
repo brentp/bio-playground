@@ -12,7 +12,7 @@ build
     g++ -O2 -o fastq fastq.c
 
 
-usage 
+usage
 -----
 
 summarize
@@ -32,7 +32,7 @@ quality usage table::
 
    fastq summarize --adjust 64 --codon some.fastq
 
-creates a table with columns of quality values for percentiles: 
+creates a table with columns of quality values for percentiles:
 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99 and for median. each
 row is a read position (useful for seeing how quality declines with
 increasing read position).

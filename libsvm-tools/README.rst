@@ -4,7 +4,7 @@ libsvm-grid.py
 `libsvm-grid.py` is a script to replace the easy.py and grid.py distributed
 with `libsvm`_. It's usage looks like::
 
-    $ python libsvm-grid.py 
+    $ python libsvm-grid.py
     Options:
       -h, --help            show this help message and exit
       --kernel=KERNEL       one of linear/polynomial/rbf/sigmoid

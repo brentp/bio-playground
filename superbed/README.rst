@@ -3,7 +3,7 @@ Annotate a Bed File
 
 Given a file in some kind of bed format (at least the first 3 cols are chr start end),
 generate a new file with 2 extra columns: gene, distance.
-In cases where the distance is zero, the feature type(s) where the overlap occured is 
+In cases where the distance is zero, the feature type(s) where the overlap occured is
 reported. These could be introns/exons/utrs, etc.
 
 Example Workflow
