@@ -112,6 +112,9 @@ def nearest(a, b):
     return fh.name
 
 def get_dist(row):
+    """
+    distance is negative b is leftOf a
+    """
     fields = row.fields
     astart, aend = row.start, row.end
     bstart, bend = int(fields[7]), int(fields[8])
@@ -122,7 +125,7 @@ def get_dist(row):
         dist = bend - astart
     else:
         1/0
-    return dist
+    return -dist if row.strand == "-" else dist
 
 def superanno(abed, bbed, has_header, no_near, out=sys.stdout):
     if no_near:
