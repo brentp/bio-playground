@@ -77,7 +77,7 @@ def overlapping(a, b):
     fh.close()
     return fh.name
 
-def nearest(a, b):
+def nearest(a, b, bstrand=None):
     a_not_overlapping = a.intersect(b, v=True)
     if len(a_not_overlapping) != 0:
         ab = a_not_overlapping.closest(b, t="all", stream=True)
@@ -97,7 +97,7 @@ def nearest(a, b):
         # TODO: just like above.
         full_names = [r[9] for r in rows]
 
-        dists = [get_dist(r) for r in rows]
+        dists = [get_dist(r, bstrand) for r in rows]
         if len(set(dists)) == 1:
             dists = set(dists)
             full_names = set(full_names)
@@ -111,7 +111,7 @@ def nearest(a, b):
     fh.close()
     return fh.name
 
-def get_dist(row):
+def get_dist(row, bstrand=None):
     """
     distance is negative b is leftOf a
     """
@@ -125,9 +125,24 @@ def get_dist(row):
         dist = bend - astart
     else:
         1/0
-    return -dist if row.strand == "-" else dist
+    if bstrand is None:
+        return -dist if row.strand == "-" else dist
+    else:
+        assert row[6 + bstrand] in "+-", row[6 + bstrand]
+        #  dist < 0
+        #  <--B--- ---A--- (-)
+        #  ---B--> ---A--- (+)
+        if dist < 0: # B leftOf A
+            return -dist if row[6 + bstrand] == "+" else dist
+          
+        #  dist > 0
+        #  ---A--- ---B--> (-)
+        #  ---A--- <--B--- (+)
+        if dist > 0: # B rightOf A
+            return -dist if row[6 + bstrand] == "+" else dist
 
-def superanno(abed, bbed, has_header, no_near, out=sys.stdout):
+        return dist
+def superanno(abed, bbed, has_header, no_near, out=sys.stdout, bstrand=None):
     if no_near:
         if out == sys.stdout: return
         for line in open(abed):
@@ -136,7 +151,7 @@ def superanno(abed, bbed, has_header, no_near, out=sys.stdout):
 
     a, header = simplify_bed(abed, has_header)
     over = overlapping(a, bbed)
-    near = nearest(a, bbed)
+    near = nearest(a, bbed, bstrand)
     if header:
         out.write("\t".join(header + ['gene', 'location']) + "\n")
     for line in open(over):
@@ -182,21 +197,30 @@ def main():
     p.add_option("--transcripts", dest="transcripts", action="store_true",
             default=False, help="use transcript names in output as well as"
             " gene name. default is just gene name")
+    p.add_option("--bstrand", dest="bstrand", default=None, type=int,
+                   help="if this is specified, it's the column number of the"
+               " strand info from the b file and nearest are reported with"
+               " upstream as negative relative to this column. either '+' or '-'")
 
     opts, args = p.parse_args()
     if (opts.a is None or opts.b is None):
         sys.exit(not p.print_help())
+
+    if not opts.bstrand is None:
+        opts.bstrand -= 1
 
     b = opts.b
     if not opts.transcripts:
         b = remove_transcripts(b)
 
     if not (opts.upstream or opts.downstream):
-        superanno(opts.a, b, opts.header, opts.no_near, sys.stdout)
+        superanno(opts.a, b, opts.header, opts.no_near, sys.stdout,
+                opts.bstrand)
 
     else:
         out = open(BedTool._tmp(), "w")
-        superanno(opts.a, b, opts.header, opts.no_near, out)
+        superanno(opts.a, b, opts.header, opts.no_near, out,
+                opts.bstrand)
         out.close()
 
         new_header = []
