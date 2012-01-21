@@ -153,7 +153,8 @@ def superanno(abed, bbed, has_header, no_near, out=sys.stdout, bstrand=None):
     over = overlapping(a, bbed)
     near = nearest(a, bbed, bstrand)
     if header:
-        out.write("\t".join(header + ['gene', 'location']) + "\n")
+        out.write("\t".join(header + ['gene',
+            'location' if bstrand is None else 'relative_location']) + "\n")
     for line in open(over):
         out.write(line)
     for line in open(near):
