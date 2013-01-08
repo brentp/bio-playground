@@ -1,6 +1,7 @@
 import socket
 import os.path as op
 import os
+import sys
 
 class IGV(object):
     r"""
@@ -70,10 +71,29 @@ class IGV(object):
     @classmethod
     def start(cls, jnlp="igv.jnlp", url="http://www.broadinstitute.org/igv/projects/current/"):
         import subprocess
+        from threading import Thread
+        import time
+
+        def readit(ffrom, fto, wait):
+            for line in iter(ffrom.readline, b''):
+                if "Listening on port" in line:
+                    wait[0] = False
+                fto.write(line + '\n')
+            ffrom.close()
+
         p = subprocess.Popen("/usr/bin/javaws -Xnosplash %s%s" % (url, jnlp),
-                shell=True, stdout=subprocess.PIPE)
-        p.wait()
-        return p.returncode
+                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        wait = [True]
+        _tout = Thread(target=readit, args=(p.stdout, sys.stdout, wait))
+        _terr = Thread(target=readit, args=(p.stderr, sys.stderr, wait))
+        _tout.daemon = _terr.deamon = True
+        _tout.start()
+        _terr.start()
+        while p.poll() is None and wait[0]:
+            time.sleep(10)
+            print "waiting", wait
+
 
     def connect(self):
         if self._socket: self._socket.close()
