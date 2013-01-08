@@ -68,10 +68,9 @@ def ma_setup(moving_average):
 
     return conv
 
-def gen_print_read(prefix, min_len):
+def gen_print_read(prefix, min_len, read):
     prefix, ext = os.path.splitext(prefix)
-
-
+    fq_read_flag = {"F3":"/1","F5":"/2"}
     # if the sent in prefix ends with .gz, we output gzip
     is_fastq = prefix.endswith((".fastq", ".fq")) or ext in (".fastq", ".fq") \
                or prefix == "-"
@@ -92,15 +91,15 @@ def gen_print_read(prefix, min_len):
             if len(cseq) > len(quals):
                 quals.append(min(quals[-3:]))
             print >>out_fq, "%s\n%s\n+\n%s" % (
-                    "@" + header[1:].rstrip("\r\n").replace("_F3", "/1"),
+                    "@" + header[1:].rstrip("\r\n").replace("_%s" % read, fq_read_flag.get(read)),
                     cseq,
                     # between 33 and 64.
                     "".join("!" if q < 0 else "?" if q > 31 else chr(q + 33) for q in quals)
             )
 
     else:
-        out_cs = nopen(prefix + "_F3.csfasta" + ext, "w")
-        out_ql = nopen(prefix + "_F3_QV.qual" + ext, "w")
+        out_cs = nopen(prefix + "_%s.csfasta" % read + ext, "w")
+        out_ql = nopen(prefix + "_%s_QV.qual" % read + ext, "w")
 
         def print_read(header, cseq, quals):
             if header[0] == "#":
@@ -167,6 +166,7 @@ def main():
              type=int , default=0)
 
     args = p.parse_args()
+    # could just use required=True
     if not (args.prefix and args.c and args.q):
         sys.exit(p.print_help())
 
@@ -175,8 +175,19 @@ def main():
         conv_fun = ma_setup(moving_average)
 
     qn = map(int, args.QN.split(",")) if args.QN else None
+    
+    # F3 or F5, assuming this is always solid naming convention
+    if "F3" in os.path.basename(args.c):
+        read = "F3"
+    elif "F5" in os.path.basename(args.c):
+        read = "F5"
+    else:
+        print >>sys.stderr, "Unable to determine F3 or F5 from file %s" % \
+            os.path.basename(args.c)
+        print >>sys.stderr, "Assuming it's F3..."
+        read = "F3"
 
-    print_read, is_fastq = gen_print_read(args.prefix, args.min_len)
+    print_read, is_fastq = gen_print_read(args.prefix, args.min_len, read)
     last_header = None
     stats = {'reads_chopped': 0, 'reads_total': 0, 'bases_skipped': 0}
     for cs, ql in izip(nopen(args.c), nopen(args.q)):
