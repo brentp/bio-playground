@@ -74,6 +74,8 @@ if __name__ == "__main__":
     fmt = "{chrom}:{start}\t{vals}"
     print "probe\t%s" % "\t".join(sources)
     for chrom, start, end, values in bed_merge(iterables, sources):
+        if sum(float(v) for v in values) < 24: continue
+        if sum(float(v) > 0 for v in values) < 2: continue
         vals = "\t".join(values)
         print fmt.format(chrom=chrom, start=start, vals=vals)
 
