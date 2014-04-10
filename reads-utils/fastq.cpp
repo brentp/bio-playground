@@ -262,9 +262,10 @@ int filter(opts o){
         return 1;
     }
     record_map::iterator pos;
-    while (!fh.eof()){
-        i += 1;
+    while (1){
         fh >> qr.header;
+        if(fh.eof()){ break; }
+        i += 1;
         fh >> qr.seq;
         fh >> qr.oheader;
         fh >> qr.squality;
