@@ -9,7 +9,7 @@ build
 -----
 ::
 
-    g++ -O2 -o fastq fastq.c
+    g++ -O2 -o fastq fastq.cpp
 
 
 usage 
