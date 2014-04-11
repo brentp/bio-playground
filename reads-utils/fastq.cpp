@@ -130,11 +130,12 @@ int fsummarize_quality(opts o){
     vector<float>::iterator stat_it;
 
     int i, L, nreads=0, masked=0;
-    while (!fh.eof()){
-        fh >> qr.header;
-        fh >> qr.seq;
-        fh >> qr.oheader;
-        fh >> qr.squality;
+    while (1){
+        getline(fh, qr.header);
+        if(fh.eof()){ break; }
+        getline(fh, qr.seq);
+        getline(fh, qr.oheader);
+        getline(fh, qr.squality);
         add_quality(&qr, o.adjust, 0, &masked);
         L = qr.iquality.size();
         for(i=0; i < L; ++i){
@@ -187,11 +188,12 @@ int fsummarize_codon(opts o){
     // this is o.summarize_codon
     int i, l, si;
     int nreads = 0;
-    while (!fh.eof()){
-        fh >> qr.header;
-        fh >> qr.seq;
-        fh >> qr.oheader;
-        fh >> qr.squality;
+    while (1){
+        getline(fh, qr.header);
+        if(fh.eof()){ break; }
+        getline(fh, qr.seq);
+        getline(fh, qr.oheader);
+        getline(fh, qr.squality);
         l = qr.squality.length();
         for(i=0; i < l; ++i){
             // default is 0, so no need to intialize.
@@ -263,12 +265,12 @@ int filter(opts o){
     }
     record_map::iterator pos;
     while (1){
-        fh >> qr.header;
+        getline(fh, qr.header);
         if(fh.eof()){ break; }
         i += 1;
-        fh >> qr.seq;
-        fh >> qr.oheader;
-        fh >> qr.squality;
+        getline(fh, qr.seq);
+        getline(fh, qr.oheader);
+        getline(fh, qr.squality);
 
         add_quality(&qr, o.adjust, o.filter_quality, &quality_skipped);
 
