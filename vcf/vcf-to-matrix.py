@@ -4,6 +4,7 @@ Given a multi-sample VCF, return a matrix of genotypes
 from __future__ import print_function, division
 import toolshed as ts
 import re
+from collections import Counter
 import sys
 
 
@@ -13,7 +14,7 @@ def get_genotype(fmt, gts, gq_cutoff=0):
     ges = []
     gqs = []
     for gt in gts:
-        if gt.startswith("./.") or gt == ".":
+        if gt.startswith("./.") or gt == "." or all ("." == v for v in gt.split(":")):
             ges.append("nan")
             gqs.append('nan')
         else:
@@ -32,7 +33,6 @@ def get_genotype(fmt, gts, gq_cutoff=0):
                 if ges[-1] > 2:
                     raise Exception(gt)
                 ges[-1] = str(ges[-1])
-
     assert len(ges) == len(gts)
     return ges, gqs
 
@@ -45,16 +45,20 @@ def main(vcf, gq_cutoff, prefix):
             print("\t".join(["loc"] + d.keys()[9:]), file=out_gts)
             print("\t".join(["loc"] + d.keys()[9:]), file=out_gqs)
 
+
         gts, gqs = get_genotype(d['FORMAT'], d.values()[9:], gq_cutoff)
-        print("\t".join(["%s:%s" % (d['CHROM'], d['POS'])] + gts), file=out_gts)
-        print("\t".join(["%s:%s" % (d['CHROM'], d['POS'])] + gqs), file=out_gqs)
+        if sum(1 for g in gts if g != "nan") < 2: continue
+
+        print("\t".join(["{CHROM}:{POS}__{INFO}__qual-{QUAL}".format(**d)] + gts), file=out_gts)
+        print("\t".join(["{CHROM}:{POS}__{INFO}__qual-{QUAL}".format(**d)] + gqs), file=out_gqs)
+
 
 
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(__doc__)
     p.add_argument('--gq', help='set values with a genotype-quality less than this to NA',
-            default=10)
+            default=0)
     p.add_argument('vcf')
     p.add_argument('prefix')
     a = p.parse_args()
