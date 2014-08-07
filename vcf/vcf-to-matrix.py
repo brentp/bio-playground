@@ -37,7 +37,7 @@ def get_genotype(fmt, gts, gq_cutoff=0):
     return ges, gqs
 
 
-def main(vcf, gq_cutoff, prefix):
+def main(vcf, gq_cutoff, prefix, min_qual):
     out_gts = open('{prefix}.gt.txt'.format(prefix=prefix), 'w')
     out_gqs = open('{prefix}.gq.txt'.format(prefix=prefix), 'w')
     for i, d in enumerate(ts.reader(vcf, header="ordered", skip_while=lambda l: l[0] != "#CHROM")):
@@ -45,6 +45,7 @@ def main(vcf, gq_cutoff, prefix):
             print("\t".join(["loc"] + d.keys()[9:]), file=out_gts)
             print("\t".join(["loc"] + d.keys()[9:]), file=out_gqs)
 
+        if float(d['QUAL']) < min_qual: continue
 
         gts, gqs = get_genotype(d['FORMAT'], d.values()[9:], gq_cutoff)
         if sum(1 for g in gts if g != "nan") < 2: continue
@@ -59,8 +60,10 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(__doc__)
     p.add_argument('--gq', help='set values with a genotype-quality less than this to NA',
             default=0)
+    p.add_argument('--min-qual', help='skip variants with QUAL less than this',
+            default=1, type=float)
     p.add_argument('vcf')
     p.add_argument('prefix')
     a = p.parse_args()
     print(a.vcf, a.prefix, a.gq)
-    main(a.vcf, a.gq, a.prefix)
+    main(a.vcf, a.gq, a.prefix, a.min_qual)
