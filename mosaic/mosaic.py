@@ -16,11 +16,12 @@ def main(args):
 
     run(a.ped, a.region, a.ref, a.bams)
 
-CMD = "freebayes -B 50 -r {region} -F 0 --pooled-continuous -f {ref} {bams}"
+CMD = "freebayes -B 10 -r {region} -F 0 --pooled-continuous -f {ref} {bams}"
 
 MIN_REQ_ALTS = 3
 
 def run(pedf, region, ref, bams):
+    print(pedf, file=sys.stderr)
     ped = Ped(pedf)
     bams = " ".join(bams)
 
@@ -52,18 +53,20 @@ def run(pedf, region, ref, bams):
 
         candidates = []
         for kid, mom, dad in trios:
-            mom = samples[mom.sample_id]['AO'].split(",")
-            if not any('0' == m for m in mom): continue
+            try:
+                mom = samples[mom.sample_id]['AO'].split(",")
+                if not any('0' == m for m in mom): continue
 
-            dad = samples[dad.sample_id]['AO'].split(",")
-            if not any('0' == d for d in dad): continue
+                dad = samples[dad.sample_id]['AO'].split(",")
+                if not any('0' == d for d in dad): continue
 
-            parents = [mom[i] + dad[i] for i in range(len(dad))]
-            if not '00' in parents: continue
+                parents = [mom[i] + dad[i] for i in range(len(dad))]
+                if not '00' in parents: continue
 
-
-            skid = samples[kid.sample_id]
-            kid_alts = map(int, skid['AO'].split(","))
+                skid = samples[kid.sample_id]
+                kid_alts = map(int, skid['AO'].split(","))
+            except KeyError: # require all samples to be called.
+                continue
 
             if not any(a >= MIN_REQ_ALTS and parents[i] == '00' for i, a in enumerate(kid_alts)):
                 continue
