@@ -7,7 +7,7 @@ import sys
 import optparse
 
 RANGES = {
-    'Sanger': (33, 93),
+    'Sanger': (33, 73),
     'Solexa': (59, 104),
     'Illumina-1.3': (64, 104),
     'Illumina-1.5': (67, 104)
