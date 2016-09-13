@@ -16,11 +16,12 @@ def main(args):
 
     run(a.ped, a.region, a.ref, a.bams)
 
-CMD = "freebayes -B 10 -r {region} -F 0 --pooled-continuous -f {ref} {bams}"
 
 MIN_REQ_ALTS = 3
+CMD = "freebayes --report-genotype-likelihood-max --genotype-qualities --min-alternate-count {min_req_alts} -B 10 -r {region} -F 0.04 --pooled-continuous -f {ref} {bams}"
 
-def run(pedf, region, ref, bams):
+
+def run(pedf, region, ref, bams, min_req_alts=MIN_REQ_ALTS):
     print(pedf, file=sys.stderr)
     ped = Ped(pedf)
     bams = " ".join(bams)
@@ -48,8 +49,11 @@ def run(pedf, region, ref, bams):
             continue
         toks = line.rstrip().split("\t")
         format = toks[8].split(":")
+        if i % 1000 == 0:
+            print("mosaic: checked ...", i, file=sys.stderr)
+            sys.stderr.flush()
 
-        samples = {sample_names[i]: dict(zip(format, t.split(":"))) for i, t in enumerate(toks[9:])}
+        samples = {sample_names[k]: dict(zip(format, t.split(":"))) for k, t in enumerate(toks[9:])}
 
         candidates = []
         for kid, mom, dad in trios:
@@ -60,7 +64,7 @@ def run(pedf, region, ref, bams):
                 dad = samples[dad.sample_id]['AO'].split(",")
                 if not any('0' == d for d in dad): continue
 
-                parents = [mom[i] + dad[i] for i in range(len(dad))]
+                parents = [mom[k] + dad[k] for k in range(len(dad))]
                 if not '00' in parents: continue
 
                 skid = samples[kid.sample_id]
@@ -68,7 +72,7 @@ def run(pedf, region, ref, bams):
             except KeyError: # require all samples to be called.
                 continue
 
-            if not any(a >= MIN_REQ_ALTS and parents[i] == '00' for i, a in enumerate(kid_alts)):
+            if not any(a >= MIN_REQ_ALTS and parents[k] == '00' for k, a in enumerate(kid_alts)):
                 continue
 
             candidates.append("%s:%s:%s:%s" % (kid.sample_id, skid['RO'], skid['AO'], skid['QA']))
@@ -77,6 +81,7 @@ def run(pedf, region, ref, bams):
 
         toks[7] = "MOSAIC=%s;%s" % ("|".join(candidates), toks[7])
         print("\t".join(toks))
+        sys.stdout.flush()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
