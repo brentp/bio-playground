@@ -6,8 +6,11 @@ guess the encoding of a stream of qual lines.
 import sys
 import optparse
 
+#  Note that the theoretical maximum for all encodings is 126.
+#  The upper limits below are for "typical" data only.
 RANGES = {
     'Sanger': (33, 73),
+    'Illumina-1.8': (33, 74),
     'Solexa': (59, 104),
     'Illumina-1.3': (64, 104),
     'Illumina-1.5': (67, 104)
