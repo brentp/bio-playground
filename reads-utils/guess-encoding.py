@@ -45,20 +45,21 @@ def main():
     gmin, gmax  = 99, 0
     valid = []
     for i, line in enumerate(sys.stdin):
-        lmin, lmax = get_qual_range(line.rstrip())
-        if lmin < gmin or lmax > gmax:
-            gmin, gmax = min(lmin, gmin), max(lmax, gmax)
-            valid = get_encodings_in_range(gmin, gmax)
-            if len(valid) == 0:
-                print >>sys.stderr, "no encodings for range: %s" % str((gmin, gmax))
-                sys.exit()
-            if len(valid) == 1 and opts.n == -1:
+        if i%4 == 3:
+            lmin, lmax = get_qual_range(line.rstrip())
+            if lmin < gmin or lmax > gmax:
+                gmin, gmax = min(lmin, gmin), max(lmax, gmax)
+                valid = get_encodings_in_range(gmin, gmax)
+                if len(valid) == 0:
+                    print >>sys.stderr, "no encodings for range: %s" % str((gmin, gmax))
+                    sys.exit()
+                if len(valid) == 1 and opts.n == -1:
+                    print "\t".join(valid) + "\t" + str((gmin, gmax))
+                    sys.exit()
+
+            if opts.n > 0 and i > opts.n:
                 print "\t".join(valid) + "\t" + str((gmin, gmax))
                 sys.exit()
-
-        if opts.n > 0 and i > opts.n:
-            print "\t".join(valid) + "\t" + str((gmin, gmax))
-            sys.exit()
 
     print "\t".join(valid) + "\t" + str((gmin, gmax))
 
