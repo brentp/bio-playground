@@ -3,6 +3,7 @@ import os.path as op
 import os
 import sys
 
+
 class IGV(object):
     r"""
     Simple wrapper to the IGV (http://www.broadinstitute.org/software/igv/home)
@@ -61,6 +62,7 @@ class IGV(object):
     """
     _socket = None
     _path = None
+
     def __init__(self, host='127.0.0.1', port=60151, snapshot_dir='/tmp/igv'):
         self.host = host
         self.port = port
@@ -82,7 +84,7 @@ class IGV(object):
             ffrom.close()
 
         p = subprocess.Popen("/usr/bin/javaws -Xnosplash %s%s" % (url, jnlp),
-                shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         wait = [True]
         _tout = Thread(target=readit, args=(p.stdout, sys.stdout, wait))
@@ -92,11 +94,11 @@ class IGV(object):
         _terr.start()
         while p.poll() is None and wait[0]:
             time.sleep(10)
-            print "waiting", wait
-
+            print("waiting", wait)
 
     def connect(self):
-        if self._socket: self._socket.close()
+        if self._socket:
+            self._socket.close()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((self.host, self.port))
 
@@ -110,37 +112,47 @@ class IGV(object):
     def load(self, url):
         return self.send('load ' + url)
 
+    def region(self, contig, start, end):
+        return self.send(' '.join(map(str, ['region', contig, start, end])))
+
     def sort(self, option='base'):
         """
         options is one of: base, position, strand, quality, sample, and
         readGroup.
         """
         assert option in ("base", "position", "strand", "quality", "sample",
-                         "readGroup")
+                          "readGroup")
         return self.send('sort ' + option)
 
-
     def set_path(self, snapshot_dir):
-        if snapshot_dir == self._path: return
+        if snapshot_dir == self._path:
+            return
         if not op.exists(snapshot_dir):
             os.makedirs(snapshot_dir)
 
         self.send('snapshotDirectory %s' % snapshot_dir)
         self._path = snapshot_dir
 
-    def expand(self, track):
+    def expand(self, track=''):
         self.send('expand %s' % track)
 
-    def collapse(self, track):
+    def collapse(self, track=''):
         self.send('collapse %s' % track)
 
     def clear(self):
         self.send('clear')
 
     def send(self, cmd):
-        self.commands.append(cmd)
-        self._socket.send(cmd + '\n')
-        return self._socket.recv(10).rstrip('\n')
+        # socket in Python2 oprates with strings
+        if sys.version_info.major == 2:
+            self._socket.send(cmd + '\n')
+            return self._socket.recv(4096).rstrip('\n')
+        # while socket in Python3 requires bytes
+        else:
+            self.commands.append(cmd)
+            cmd = cmd + '\n'
+            self._socket.send(cmd.encode('utf-8'))
+            return self._socket.recv(4096).decode('utf-8').rstrip('\n')
 
     def save(self, path=None):
         if path is not None:
@@ -157,4 +169,3 @@ class IGV(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-

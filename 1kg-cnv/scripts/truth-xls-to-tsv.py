@@ -27,6 +27,7 @@ def get_bam_lookup(p="data/bam-lookups-from-1kg-site.tsv"):
         if 'chrom20' in d['url']: continue
         if 'chrom11' in d['url']: continue
         if 'unmapped' in d['url']: continue
+        # NOTE: we could also get some samples with cram.
         if not d['url'].endswith('.bam'): continue
         if d['Sample'] in l:
             print "XXX:", d['url']
