@@ -1,5 +1,5 @@
 /*
- * NOTE: this file was oringally de-packed from it's aj-min2.js available from http://www.annoj.org 
+ * NOTE: this file was oringally de-packed from it's aj-min2.js available from http://www.annoj.org
  *
  * Copyright (c) 2008 Julian Tonti-Filippini (tontij01(at)student.uwa.edu.au)
  *
@@ -7,10 +7,10 @@
  *
  * License:
  * Attribution-Noncommercial-Share Alike 3.0 Unported
- * 
+ *
  * License Overview:
  * http://creativecommons.org/licenses/by-nc-sa/3.0/
- * 
+ *
  * License Specifics:
  * http://creativecommons.org/licenses/by-nc-sa/3.0/legalcode
  *

@@ -12,7 +12,7 @@ tmpl = op.join(op.dirname(PATH), "templates")
 def index(organism):
     t = Template(filename=op.join(tmpl, "index.mako"), lookup=TemplateLookup(directories=tmpl))
     return t.render(organism=organism, seqid='Bd1', position=1234)
-         
+
 
 application = default_app()
 

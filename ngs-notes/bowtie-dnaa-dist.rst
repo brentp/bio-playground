@@ -6,7 +6,7 @@ The command I used was::
 
     dwgsim -d 300 -s 50 -N 10000 -1 76 -2 76 chr22.fa gen gen
 
-Indicating that the distance between ends should be 300 bp on average with 
+Indicating that the distance between ends should be 300 bp on average with
 a standard deviation of 50. Since this is just a test, I use human chromosome
 22 and generate only 10000 reads.
 
@@ -36,7 +36,7 @@ size...
 From the bowtie docs::
 
 
-    The maximum insert size for valid paired-end alignments. 
+    The maximum insert size for valid paired-end alignments.
     E.g. if -X 100 is specified and a paired-end alignment consists
     of two 20-bp alignments in the proper orientation with a 60-bp
     gap between them, that alignment is considered valid (as long
@@ -46,9 +46,9 @@ From the bowtie docs::
     mates. Default: 250.
 
 So the reads are 76 and dwgsim uses the distance specified (here 300)
-as the outer dist then bowtie *should* map with the default maxins of 
+as the outer dist then bowtie *should* map with the default maxins of
 250. However, clearly it does not. If we assume it's actually measuring
-the inner distance, then we need 300 + 76 * 2 + 2* standard-deviation 
+the inner distance, then we need 300 + 76 * 2 + 2* standard-deviation
 -- so we'll just use 700::
 
 

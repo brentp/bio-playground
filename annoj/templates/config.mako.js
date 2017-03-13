@@ -1,9 +1,9 @@
 //The Anno-J configuration object
 AnnoJ.config = {
-    
+
         //List of configurations for all tracks in the Anno-J instance
         tracks : [
-    
+
             //Example config for a ModelsTrack
             {
                 id   : 'models',
@@ -17,21 +17,21 @@ AnnoJ.config = {
                 showControls : true
             },
             // http://www.annoj.org/instances/configure.shtml
-            
+
         ],
-        
+
         //A list of tracks that will be active by default (use the ID of the track)
         active : [
             'models'
         ],
-        
+
         //Address of service that provides information about this genome
         //genome    : '/proxy/arabidopsis_thaliana.php',
         genome    : '/organism/${organism}',
-        
+
         //Address of service that stores / loads user bookmarks
         //bookmarks : '/bed/genome',
-    
+
         //A list of stylesheets that a user can select between (optional)
         stylesheets : [
             {
@@ -44,9 +44,9 @@ AnnoJ.config = {
                 name : 'SALK CSS',
                 href : 'http://www.annoj.org/css/salk.css',
                 active : true
-            }       
+            }
         ],
-        
+
         //The default 'view'. In this example, chr1, position 1, zoom ratio 20:1.
         location : {
             assembly : '${seqid}',
@@ -54,7 +54,7 @@ AnnoJ.config = {
             bases    : 80,
             pixels   : 1
         },
-        
+
         //Site administrator contact details (optional)
         admin : {
             name  : 'Ju',

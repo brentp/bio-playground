@@ -25,5 +25,5 @@ Usage is stolen from the `biopython <http://github.com/biopython/biopython>`_ do
     >>> print "%.3f ... %.3f" % (result[0], result[-1])
     4.712 ... 85.470
 
-On large datasets, this runs *much* faster and uses less memory than the 
+On large datasets, this runs *much* faster and uses less memory than the
 biopython implementation.

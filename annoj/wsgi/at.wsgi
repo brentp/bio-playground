@@ -67,7 +67,7 @@ def describe(organism):
                                    "start": int(row['start']), 'end': int(row['end']),
                                    "description": "blah"}}
     return simplejson.dumps(d)
-        
+
 
 @route('/:organism')
 def genome(organism):

@@ -7,7 +7,7 @@ This will cover how to set up an html page that links to remote `DAS`_ services.
 It will also show how to create and serve `BigWig`_ and `BigBed`_ files.
 
 .. note::
-    
+
     This document will be using hg18 for this tutorial, but it is applicable to
     any version available from your favorite database or `DAS`_ .
 
@@ -80,11 +80,11 @@ SQL
 ---
 
 UCSC also has a public mysql server so the process of downloading to a bed can be simplified to::
-    
+
     mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -D hg18 -P 3306   -e "select chrom,txStart,txEnd,K.name,X.geneSymbol,strand,exonStarts,exonEnds from knownGene as K,kgXref as X where  X.kgId=K.name;" > tmp.notbed
     grep -v txStart tmp.notbed | awk '
             BEGIN { OFS = "\t"; FS="\t" } ;
-                {   
+                {
                     delete astarts;
                     delete aends;
                     split($7, astarts, /,/);
