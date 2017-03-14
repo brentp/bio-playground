@@ -6,9 +6,9 @@ ffi.cdef(header)
 
 local Variant = ffi.metatype("bcf1_t", {
     __index = {
-        start = function(t) return t.pos - 1 end,
+        start = function(t) return t.pos end,
         stop = function(t) 
-            return t.pos - 1 + ffi.string(t.d.allele[0]):len() end,
+            return t.pos + t.rlen end,
         function(t, k) 
             return k
         end,
@@ -69,8 +69,12 @@ while true do
     -- make a file metatype
     htf = hts.hts_open("vt.norm.vcf.gz", "r")
     hdr = hts.bcf_hdr_read(htf)
+    k = 0
 
     while true do
+        --io.stderr:write(k)
+        --io.stderr:write("\n")
+        k = k+1
         local bcf = bcf_init()
         ret = hts.bcf_read(htf, hdr, bcf)
         if ret < 0 then break end

@@ -398,3 +398,4 @@ static inline int bcf_float_is_missing(float f)
 	    return u.i==bcf_float_missing ? 1 : 0;
 }
 
+void bcf_hdr_destroy(bcf_hdr_t *h);
