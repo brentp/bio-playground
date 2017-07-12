@@ -24,7 +24,7 @@ RANGES = {
     'Illumina-1.8': (33, 74),
     'Solexa': (59, 104),
     'Illumina-1.3': (64, 104),
-    'Illumina-1.5': (67, 104)
+    'Illumina-1.5': (66, 105)
 }
 
 
