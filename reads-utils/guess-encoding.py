@@ -8,7 +8,7 @@ from a file provided as an argument.
 
 Use cases: `awk 'NR % 4 == 0' <FASTQ> | %prog [options]`,
            `%prog [options] <quality scores file>`,
-           `samtools view <BAM file> | cut -f 5 | %prog [options]`
+           `samtools view <BAM file> | cut -f 11 | %prog [options]`
 """
 
 from __future__ import with_statement, division, print_function
@@ -24,7 +24,7 @@ RANGES = {
     'Illumina-1.8': (33, 74),
     'Solexa': (59, 104),
     'Illumina-1.3': (64, 104),
-    'Illumina-1.5': (67, 104)
+    'Illumina-1.5': (67, 105)
 }
 
 
