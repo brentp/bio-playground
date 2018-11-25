@@ -8,7 +8,7 @@ from a file provided as an argument.
 
 Use cases: `awk 'NR % 4 == 0' <FASTQ> | %prog [options]`,
            `%prog [options] <quality scores file>`,
-           `samtools view <BAM file> | cut -f 5 | %prog [options]`
+           `samtools view <BAM file> | cut -f 11 | %prog [options]`
 """
 
 from __future__ import with_statement, division, print_function
@@ -102,8 +102,7 @@ def main():
     if err_exit:
         sys.exit(1)
     else:
-        print("{}\t{}\t{}".format(valid, gmin, gmax),
-              file=sys.stderr)
+        print("{}\t{}\t{}".format(",".join(valid), gmin, gmax))
 
 
 if __name__ == "__main__":
