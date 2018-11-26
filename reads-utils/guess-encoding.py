@@ -44,10 +44,10 @@ def get_qual_range(qual_str):
     (68, 89...)
     """
 
-    qual_val_counts = Counter([ord(qual_char) for qual_char in qual_str])
+    qual_val_counts = Counter(ord(qual_char) for qual_char in qual_str)
 
-    min_base_qual = min(qual_val_counts.elements())
-    max_base_qual = max(qual_val_counts.elements())
+    min_base_qual = min(qual_val_counts.keys())
+    max_base_qual = max(qual_val_counts.keys())
 
     return (min_base_qual, max_base_qual, qual_val_counts)
 
