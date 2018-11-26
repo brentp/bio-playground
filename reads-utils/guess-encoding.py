@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
 Guess the encoding of a stream of qual lines.
@@ -14,8 +15,11 @@ Use cases: `awk 'NR % 4 == 0' <FASTQ> | %prog [options]`,
 from __future__ import with_statement, division, print_function
 
 import fileinput
+import operator
 import optparse
 import sys
+
+from collections import Counter
 
 #  Note that the theoretical maximum for all encodings is 126.
 #  The upper limits below are for "typical" data only.
@@ -27,15 +31,25 @@ RANGES = {
     'Illumina-1.5': (66, 105)
 }
 
+# The threshold to decide between Illumina-1.3 and Illumina-1.5
+# based upon how common "B" is. The threshold insists it is
+# within the Nth most common quality scores.
+# N.B. needs to be conservative, as this is applied per input line.
+N_MOST_COMMON_THRESH = 4
+
 
 def get_qual_range(qual_str):
     """
     >>> get_qual_range("DLXYXXRXWYYTPMLUUQWTXTRSXSWMDMTRNDNSMJFJFFRMV")
-    (68, 89)
+    (68, 89...)
     """
 
-    vals = [ord(c) for c in qual_str]
-    return min(vals), max(vals)
+    qual_val_counts = Counter(ord(qual_char) for qual_char in qual_str)
+
+    min_base_qual = min(qual_val_counts.keys())
+    max_base_qual = max(qual_val_counts.keys())
+
+    return (min_base_qual, max_base_qual, qual_val_counts)
 
 
 def get_encodings_in_range(rmin, rmax, ranges=RANGES):
@@ -44,6 +58,30 @@ def get_encodings_in_range(rmin, rmax, ranges=RANGES):
         if rmin >= emin and rmax <= emax:
             valid_encodings.append(encoding)
     return valid_encodings
+
+
+def heuristic_filter(valid, qual_val_counts):
+    """Apply heuristics to particular ASCII value scores
+       to try to narrow-down the encoding, beyond min/max.
+    """
+
+    if 'Illumina-1.5' in valid:
+        # 64–65: Phread+64 quality scores of 0–1 ('@'–'A')
+        #        unused in Illumina 1.5+
+        if qual_val_counts[64] > 0 or qual_val_counts[65] > 0:
+            valid.remove('Illumina-1.5')
+
+        # 66: Phread+64 quality score of 2 'B'
+        #     used by Illumina 1.5+ as QC indicator
+        elif 66 in map(operator.itemgetter(0),
+                       qual_val_counts.most_common(N_MOST_COMMON_THRESH)):
+            print("# A large number of 'B' quality scores (value 2, ASCII 66) "
+                  "were detected, which makes it likely that this encoding is "
+                  "Illumina-1.5, which has been returned as the only option.",
+                  file=sys.stderr)
+            valid = ['Illumina-1.5']
+
+    return valid
 
 
 def main():
@@ -77,11 +115,13 @@ def main():
             print("# reading qualities from "
                   "{}".format(input_filename_for_disp), file=sys.stderr)
 
-        lmin, lmax = get_qual_range(line.rstrip())
+        lmin, lmax, qual_val_counts = get_qual_range(line.rstrip())
 
         if lmin < gmin or lmax > gmax:
             gmin, gmax = min(lmin, gmin), max(lmax, gmax)
             valid = get_encodings_in_range(gmin, gmax)
+
+            valid = heuristic_filter(valid, qual_val_counts)
 
             if len(valid) == 0:
                 print("no encodings for range: "
